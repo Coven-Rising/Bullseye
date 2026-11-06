@@ -7,7 +7,7 @@ const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
 const state = { day: 0, questions: [], index: 0, results: [] };
 
-function storageKey() { return `bullseye-day-${state.day}`; }
+function storageKey() { return `bullseye-${state.practice ? "practice" : "day"}-${state.day}`; }
 function save() {
   try { localStorage.setItem(storageKey(), JSON.stringify(state.results)); } catch {}
 }
@@ -24,7 +24,54 @@ async function start() {
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
-  if (state.index >= state.questions.length) showSummary(); else showQuestion();
+  if (state.index >= state.questions.length) showSummary(); else showStart();
+}
+
+function showStart() {
+  for (const id of ["#screen-question", "#screen-reveal", "#screen-summary"]) $(id).hidden = true;
+  $("#screen-start").hidden = false;
+  const st = loadStats();
+  const streak = currentStreak(st, state.day);
+  const line = $("#start-streak");
+  line.hidden = streak < 1;
+  line.textContent = `🔥 ${streak}-day streak. Keep it going!`;
+  $("#play").textContent = state.index > 0 ? `Continue #${state.day}` : `Play #${state.day}`;
+  $("#play").onclick = () => { if (soundOn) ctx(); showQuestion(); window.scrollTo(0, 0); };
+}
+
+// Personal stats, kept on this device only.
+const STATS_KEY = "bullseye-stats";
+function loadStats() {
+  try { return { played: 0, best: 0, bullseyes: 0, streak: 0, maxStreak: 0, lastDay: 0, ...JSON.parse(localStorage.getItem(STATS_KEY)) }; }
+  catch { return { played: 0, best: 0, bullseyes: 0, streak: 0, maxStreak: 0, lastDay: 0 }; }
+}
+// A streak only counts if the last puzzle played was today or yesterday.
+function currentStreak(st, day) { return st.lastDay >= day - 1 ? st.streak : 0; }
+function recordDay(day, total, bulls) {
+  const st = loadStats();
+  if (st.lastDay >= day) return st; // already counted (e.g. a page reload)
+  st.streak = st.lastDay === day - 1 ? st.streak + 1 : 1;
+  st.maxStreak = Math.max(st.maxStreak, st.streak);
+  st.played += 1;
+  st.best = Math.max(st.best, total);
+  st.bullseyes += bulls;
+  st.lastDay = day;
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch {}
+  return st;
+}
+
+// Time left until local midnight, when the next puzzle unlocks.
+function startCountdown() {
+  clearInterval(startCountdown._i);
+  const tick = () => {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const left = Math.max(0, Math.floor((next - now) / 1000));
+    const pad = (n) => String(n).padStart(2, "0");
+    $("#s-countdown").textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor(left / 60) % 60)}:${pad(left % 60)}`;
+  };
+  tick();
+  startCountdown._i = setInterval(tick, 1000);
 }
 
 function showQuestion() {
@@ -426,11 +473,20 @@ function shareText() {
 }
 
 function showSummary() {
+  $("#screen-start").hidden = true;
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = false;
   const total = state.results.reduce((a, r) => a + r.points, 0);
-  $("#s-total").textContent = total;
+  const bulls = state.results.filter((r) => r.bullseye).length;
+  const st = state.practice ? loadStats() : recordDay(state.day, total, bulls);
+  $("#s-title").textContent = state.practice ? `Practice set complete!` : `Puzzle #${state.day} complete!`;
+  countUp($("#s-total"), total, (n) => String(Math.round(n)), 300);
+  $("#st-played").textContent = st.played;
+  $("#st-streak").textContent = currentStreak(st, puzzleNumber(new Date()));
+  $("#st-best").textContent = st.best;
+  $("#st-bulls").textContent = st.bullseyes;
+  startCountdown();
   $("#s-max").textContent = state.questions.length * 100;
   $("#s-squares").textContent = state.results.map(shareSquare).join("");
   const list = $("#s-list");
@@ -447,6 +503,7 @@ function showSummary() {
   // Prototype only: jump to the next set of questions to keep playing.
   $("#practice").onclick = () => {
     state.day++;
+    state.practice = true;
     state.questions = pickDaily(state.pool, state.day, QUESTIONS_PER_DAY);
     state.results = [];
     state.index = 0;

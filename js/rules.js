@@ -41,9 +41,11 @@ export function pickDaily(pool, day, count) {
   return Array.from({ length: n }, (_, i) => order[(start + i) % order.length]);
 }
 
-// The slider always starts at 0. Its top is the first clean number
-// (10, 25, 50, 100, 250, 500, 1,000 ...) at or above the answer.
-// About 1 in 4 questions goes one step higher, so the answer isn't always near the end.
+// The slider always starts at 0. Its top is a clean number (10, 25, 50, 100,
+// 250, 500, 1,000 ...) with the answer no more than 90% of the way along, so
+// the end of the bar never gives the answer away. About 1 in 3 questions goes
+// one step higher still.
+export const MAX_POSITION = 0.9;
 export function scaleLadder(upTo) {
   const steps = [];
   for (let p = 1; ; p *= 10) {
@@ -57,8 +59,8 @@ export function scaleLadder(upTo) {
 export function sliderMax(q) {
   if (q.max) return q.max; // a question can set its own scale
   const ladder = scaleLadder(q.answer * 10);
-  let i = ladder.findIndex((v) => v >= q.answer);
-  if (hash(q.id) % 4 === 0) i++;
+  let i = ladder.findIndex((v) => q.answer <= v * MAX_POSITION);
+  if (hash(q.id) % 3 === 0) i++;
   return ladder[i];
 }
 

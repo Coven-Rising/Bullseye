@@ -27,6 +27,18 @@
   </header>
 
   <main>
+    <section id="screen-start" class="card start" hidden>
+      <div class="bubble"><h2 class="prompt">10 questions. One slider. How close can you get?</h2></div>
+      <ol class="how">
+        <li><span class="how-n">1</span><span><b>Drag the slider</b> to your best guess. Use + and − or type a number to fine-tune.</span></li>
+        <li><span class="how-n">2</span><span><b>Lock it in</b> and watch where your dart lands.</span></li>
+        <li><span class="how-n">3</span><span><b>Hit the bullseye</b> for 100 points. The closer you are, the more you score.</span></li>
+      </ol>
+      <p id="start-streak" class="start-streak" hidden></p>
+      <button id="play" class="primary">Play</button>
+      <p class="come-back">A new puzzle every day at midnight.</p>
+    </section>
+
     <section id="screen-question" class="card" hidden>
       <div class="meta">
         <span id="q-progress" class="dots" role="img"></span>
@@ -87,13 +99,26 @@
     </section>
 
     <section id="screen-summary" class="card" hidden>
-      <h2 class="summary-title">Today's score</h2>
-      <div class="points big"><span id="s-total"></span><small>/<span id="s-max"></span></small></div>
-      <p id="s-squares" class="squares"></p>
+      <h2 id="s-title" class="summary-title"></h2>
+      <div class="tile tile-score summary-score">
+        <span class="label">Today's score</span>
+        <div class="points big"><span id="s-total"></span><small>/<span id="s-max"></span></small></div>
+        <p id="s-squares" class="squares"></p>
+      </div>
+      <div class="stats" aria-label="Your stats">
+        <div class="stat"><span id="st-played" class="stat-n"></span><span class="stat-l">Played</span></div>
+        <div class="stat"><span id="st-streak" class="stat-n"></span><span class="stat-l">Streak</span></div>
+        <div class="stat"><span id="st-best" class="stat-n"></span><span class="stat-l">Best</span></div>
+        <div class="stat"><span id="st-bulls" class="stat-n"></span><span class="stat-l">Bullseyes</span></div>
+      </div>
       <button id="share" class="primary">Copy result</button>
       <textarea id="share-text" class="share-text" rows="3" readonly hidden aria-label="Your result"></textarea>
+      <div class="countdown">
+        <span class="label">Next puzzle in</span>
+        <span id="s-countdown" class="countdown-n">--:--:--</span>
+      </div>
+      <h3 class="s-list-title">Your answers</h3>
       <ol id="s-list" class="s-list"></ol>
-      <p class="come-back">New questions every day at midnight.</p>
       <button id="practice" class="secondary">Play another set (practice)</button>
     </section>
   </main>
