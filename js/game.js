@@ -56,12 +56,13 @@ function showQuestion() {
   box.value = 0;
   updateFill();
 
-  let lastNotch = 0;
+  let lastVal = 0;
   slider.oninput = () => {
-    box.value = Math.round(Number(slider.value)); updateFill();
-    // Tick each time the handle crosses one of 40 notches along the bar.
-    const notch = Math.round((Number(slider.value) / max) * 40);
-    if (notch !== lastNotch) { lastNotch = notch; sliderTick(); }
+    const v = Math.round(Number(slider.value));
+    box.value = v; updateFill();
+    // Tick on every change, however small. Fast drags are paced to a steady
+    // rattle by the throttle in click(); pitch rises as the handle goes up.
+    if (v !== lastVal) { lastVal = v; sliderTick(v / max); }
   };
   box.oninput = () => {
     const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0)));
@@ -74,10 +75,10 @@ function showQuestion() {
 }
 
 function nudge(d, max) {
-  sliderTick();
   const box = $("#guess-box");
   const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0) + d));
   box.value = v; $("#slider").value = v; updateFill();
+  sliderTick(v / max);
 }
 
 function updateFill() {
@@ -262,7 +263,7 @@ function click(kind, freq, gain, minGap) {
   src.connect(g).connect(master);
   src.start(a.currentTime + 0.005);
 }
-const sliderTick = () => click("slider", 1800, 0.35, 35);
+const sliderTick = (pos = 0.5) => click("slider", 1500 + Math.round(pos * 8) * 100, 0.35, 30);
 const countTick = () => click("count", 3200, 0.22, 45);
 
 // Start audio on the first touch so the first tick isn't delayed.
