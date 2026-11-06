@@ -333,7 +333,7 @@ function throwSound(tier) {
   if (tier === "close") { tone(1319, 1.05, 0.2); tone(1760, 1.2, 0.5); }
   if (tier === "decent") tone(1047, 1.05, 0.45, "triangle", 0.12);
   if (tier === "ouch") slide(320, 110, 1.05, 0.55);
-  if (tier === "miss") { thunk(1.0); buzzer(1.15, 0.6); }
+  if (tier === "miss") { thunk(1.0); womp(1.2, 233, 0.42); womp(1.66, 208, 1.0, true); }
 }
 function slide(from, to, start, dur) {
   const a = ctx(); if (!a) return;
@@ -341,6 +341,31 @@ function slide(from, to, start, dur) {
   o.type = "triangle"; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + dur);
   g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+// A muted-trombone "womp": a buzzy tone through a filter that opens and
+// closes like a plunger mute, sagging slightly in pitch.
+function womp(start, freq, dur, wobble = false) {
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + start;
+  const o = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(freq * 1.03, t);
+  o.frequency.exponentialRampToValueAtTime(freq * 0.94, t + dur);
+  if (wobble) {
+    const lfo = a.createOscillator(), lg = a.createGain();
+    lfo.frequency.value = 6; lg.gain.value = freq * 0.035;
+    lfo.connect(lg).connect(o.frequency); lfo.start(t + 0.2); lfo.stop(t + dur + 0.05);
+  }
+  f.type = "lowpass"; f.Q.value = 6;
+  f.frequency.setValueAtTime(300, t);
+  f.frequency.exponentialRampToValueAtTime(1400, t + 0.12);
+  f.frequency.exponentialRampToValueAtTime(450, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.28, t + 0.05);
+  g.gain.setValueAtTime(0.28, t + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(f).connect(g).connect(a.destination);
+  o.start(t); o.stop(t + dur + 0.05);
 }
 function buzzer(start, dur) {
   const a = ctx(); if (!a) return;
