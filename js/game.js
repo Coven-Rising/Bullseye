@@ -90,9 +90,10 @@ function showReveal(q, max, guess, points, bullseye) {
   $("#r-points").textContent = points;
   $("#r-answer").textContent = fmt(q.answer) + unit;
   $("#r-guess").textContent = fmt(guess) + unit;
-  const accuracy = Math.max(0, 100 - (Math.abs(guess - q.answer) / max) * 100);
+  // Off by, as a share of the slider's scale (the same measure the score uses).
+  const offPct = (Math.abs(guess - q.answer) / max) * 100;
   $("#r-accuracy").hidden = bullseye;
-  $("#r-accuracy-value").textContent = `${accuracy >= 99.95 ? "99.9" : accuracy.toFixed(1)}%`;
+  $("#r-accuracy-value").textContent = `${offPct > 0 && offPct < 0.1 ? "0.1" : offPct.toFixed(1)}%`;
   $("#r-working").hidden = !q.working;
   $("#r-working").textContent = q.working ? `Working: ${q.working}` : "";
 
