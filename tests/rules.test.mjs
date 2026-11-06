@@ -14,6 +14,11 @@ test("slider top is a clean number at or above the answer", () => {
   assert.equal(sliderMax({ id: "x", answer: 99 }) >= 100, true);
 });
 
+test("the answer never sits at the very end of the bar", () => {
+  for (const q of pool) assert.ok(q.answer <= sliderMax(q) * 0.9, q.id);
+  assert.ok(sliderMax({ id: "y", answer: 100 }) > 100);
+});
+
 test("small scales need an exact answer", () => {
   assert.equal(bullseyeTolerance({ type: "fact" }, 100), 0);
   assert.equal(bullseyeTolerance({ type: "fact" }, 1000000), 5000);
