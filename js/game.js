@@ -380,7 +380,7 @@ function throwSound(tier) {
   if (tier === "close") { tone(1319, 1.05, 0.2); tone(1760, 1.2, 0.5); }
   if (tier === "decent") tone(1047, 1.05, 0.45, "triangle", 0.12);
   if (tier === "ouch") slide(320, 110, 1.05, 0.55);
-  if (tier === "miss") { thunk(1.0); womp(1.2, 233, 0.42); womp(1.66, 208, 1.0, true); }
+  if (tier === "miss") { thunk(1.0); tone(392, 1.2, 0.2, "sine", 0.1); tone(311, 1.42, 0.4, "sine", 0.1); }
 }
 function slide(from, to, start, dur) {
   const a = ctx(); if (!a) return;
