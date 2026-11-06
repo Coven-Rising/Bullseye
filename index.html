@@ -36,8 +36,15 @@
     <section id="screen-reveal" class="card" hidden>
       <p id="r-prompt" class="r-prompt"></p>
       <div class="points-row">
-        <div class="points"><span id="r-points"></span><small>/100</small></div>
+        <div class="score">
+          <span class="label">Score</span>
+          <div class="points"><span id="r-points"></span><small>/100</small></div>
+        </div>
         <div id="r-badge" class="badge" hidden>🎯 Bullseye!</div>
+        <div id="r-accuracy" class="accuracy" hidden>
+          <span class="label">Accuracy</span>
+          <span id="r-accuracy-value" class="accuracy-value"></span>
+        </div>
       </div>
 
       <div class="track" aria-hidden="true">
@@ -48,13 +55,16 @@
       <div class="scale"><span>0</span><span id="t-max"></span></div>
 
       <dl class="facts">
-        <div><dt>Answer</dt><dd id="r-answer"></dd></div>
-        <div><dt>Your guess</dt><dd id="r-guess"></dd></div>
-        <div><dt>Off by</dt><dd id="r-off"></dd></div>
-        <div><dt>Bullseye window</dt><dd id="r-window"></dd></div>
+        <div><dt>Your answer</dt><dd id="r-guess"></dd></div>
+        <div><dt>Correct answer</dt><dd id="r-answer"></dd></div>
       </dl>
       <p id="r-working" class="working" hidden></p>
-      <p class="source"><a id="r-source" target="_blank" rel="noopener">Source</a></p>
+
+      <button id="r-source-toggle" class="source-toggle" aria-expanded="false" aria-controls="r-source">Source</button>
+      <div id="r-source" class="source-panel" hidden>
+        <p id="r-source-note"></p>
+        <p id="r-source-site" class="source-site"></p>
+      </div>
 
       <button id="next" class="primary"></button>
     </section>

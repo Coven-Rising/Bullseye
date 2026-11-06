@@ -90,12 +90,25 @@ function showReveal(q, max, guess, points, bullseye) {
   $("#r-points").textContent = points;
   $("#r-answer").textContent = fmt(q.answer) + unit;
   $("#r-guess").textContent = fmt(guess) + unit;
-  const off = guess - q.answer;
-  $("#r-off").textContent = off === 0 ? "Spot on" : `${off > 0 ? "+" : "−"}${fmt(Math.abs(off))} (${(Math.abs(off) / max * 100).toFixed(1)}% of the scale)`;
-  $("#r-window").textContent = tol === 0 ? "Exact answer only" : `Within ±${fmt(tol)}`;
+  const accuracy = Math.max(0, 100 - (Math.abs(guess - q.answer) / max) * 100);
+  $("#r-accuracy").hidden = bullseye;
+  $("#r-accuracy-value").textContent = `${accuracy >= 99.95 ? "99.9" : accuracy.toFixed(1)}%`;
   $("#r-working").hidden = !q.working;
   $("#r-working").textContent = q.working ? `Working: ${q.working}` : "";
-  $("#r-source").href = q.source;
+
+  // Source: a few lines of info, not a link out of the game.
+  const panel = $("#r-source");
+  const toggle = $("#r-source-toggle");
+  panel.hidden = true;
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.textContent = "Source";
+  $("#r-source-note").textContent = q.sourceNote || "";
+  $("#r-source-site").textContent = `Source: ${siteName(q.source)}`;
+  toggle.onclick = () => {
+    panel.hidden = !panel.hidden;
+    toggle.setAttribute("aria-expanded", String(!panel.hidden));
+    toggle.textContent = panel.hidden ? "Source" : "Hide source";
+  };
 
   // Track: answer marker, guess marker, and the bullseye window.
   const pos = (v) => `${(v / max) * 100}%`;
@@ -115,6 +128,18 @@ function showReveal(q, max, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+// "https://en.wikipedia.org/wiki/Mount_Everest" -> "Wikipedia, Mount Everest"
+function siteName(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.endsWith("wikipedia.org")) {
+      const page = decodeURIComponent(u.pathname.split("/").pop()).replace(/_/g, " ");
+      return `Wikipedia, ${page}`;
+    }
+    return u.hostname.replace(/^www\./, "");
+  } catch { return url; }
 }
 
 function shareText() {
