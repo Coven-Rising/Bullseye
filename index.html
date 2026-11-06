@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bullseye</title>
+  <meta name="description" content="A daily estimation game. Ten questions, one slider, how close can you get?">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1 class="logo"><span class="ring" aria-hidden="true"></span>Bullseye</h1>
+    <span id="puzzle-no" class="puzzle-no"></span>
+  </header>
+
+  <main>
+    <section id="screen-question" class="card" hidden>
+      <div class="meta">
+        <span id="q-progress"></span>
+        <span class="tags"><span id="q-fermi" class="tag fermi" hidden>Fermi estimate</span><span id="q-category" class="tag"></span></span>
+      </div>
+      <h2 id="q-prompt" class="prompt"></h2>
+
+      <div class="readout">
+        <button id="minus" class="nudge" aria-label="Decrease by 1">−</button>
+        <input id="guess-box" type="number" inputmode="numeric" min="0" step="1" aria-label="Your guess">
+        <button id="plus" class="nudge" aria-label="Increase by 1">+</button>
+      </div>
+
+      <input id="slider" type="range" min="0" aria-label="Drag to guess">
+      <div class="scale"><span>0</span><span id="q-max"></span></div>
+
+      <button id="lock" class="primary">Lock it in</button>
+    </section>
+
+    <section id="screen-reveal" class="card" hidden>
+      <p id="r-prompt" class="r-prompt"></p>
+      <div class="points-row">
+        <div class="points"><span id="r-points"></span><small>/100</small></div>
+        <div id="r-badge" class="badge" hidden>🎯 Bullseye!</div>
+      </div>
+
+      <div class="track" aria-hidden="true">
+        <div id="t-window" class="t-window"></div>
+        <div id="t-answer" class="t-mark t-answer"><span>Answer</span></div>
+        <div id="t-guess" class="t-mark t-guess"><span>You</span></div>
+      </div>
+      <div class="scale"><span>0</span><span id="t-max"></span></div>
+
+      <dl class="facts">
+        <div><dt>Answer</dt><dd id="r-answer"></dd></div>
+        <div><dt>Your guess</dt><dd id="r-guess"></dd></div>
+        <div><dt>Off by</dt><dd id="r-off"></dd></div>
+        <div><dt>Bullseye window</dt><dd id="r-window"></dd></div>
+      </dl>
+      <p id="r-working" class="working" hidden></p>
+      <p class="source"><a id="r-source" target="_blank" rel="noopener">Source</a></p>
+
+      <button id="next" class="primary"></button>
+    </section>
+
+    <section id="screen-summary" class="card" hidden>
+      <h2 class="prompt">Today's score</h2>
+      <div class="points big"><span id="s-total"></span><small>/<span id="s-max"></span></small></div>
+      <p id="s-squares" class="squares"></p>
+      <button id="share" class="primary">Copy result</button>
+      <textarea id="share-text" class="share-text" rows="3" readonly hidden aria-label="Your result"></textarea>
+      <ol id="s-list" class="s-list"></ol>
+      <p class="come-back">New questions every day at midnight.</p>
+    </section>
+  </main>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>
