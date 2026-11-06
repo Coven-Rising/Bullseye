@@ -280,19 +280,19 @@ main { padding-block: 0 40px; }
 @keyframes text-pop { from { transform: translateX(-50%) scale(0.3) rotate(-8deg); opacity: 0; } to { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; } }
 
 /* Non-bullseye throws: shorter, no flash, shake, shockwave or ring lights. */
-.bull-fx.play:not(.tier-bull) { animation: fx-fade 1600ms both; }
-.bull-fx.play.tier-miss { animation-duration: 1900ms; }
+.bull-fx.play:not(.tier-bull) { animation: fx-fade 2000ms both; }
+.bull-fx.play.tier-miss { animation-duration: 2300ms; }
 .bull-fx.play:not(.tier-bull) .fx-stage,
 .bull-fx.play:not(.tier-bull) .fx-flash,
 .bull-fx.play:not(.tier-bull) .fx-shock,
 .bull-fx.play:not(.tier-bull) .fx-rings circle,
 .bull-fx.play:not(.tier-bull) .fx-burst i { animation: none; }
-.bull-fx.play:not(.tier-bull) .fx-board { animation: board-pop 450ms both cubic-bezier(.3,1.6,.5,1), board-thud 220ms 750ms forwards; }
-.bull-fx.play:not(.tier-bull) .fx-dart-wrap { animation: dart-fly 450ms 300ms both cubic-bezier(.5,0,.9,.5), dart-wobble 500ms 750ms forwards; }
-.bull-fx.play:not(.tier-bull) .fx-trail { animation: trail 450ms 300ms both linear; }
-.bull-fx.play:not(.tier-bull) .fx-text { animation: text-pop 400ms 820ms both cubic-bezier(.3,1.8,.5,1); }
-.bull-fx.play.tier-miss .fx-dart-wrap { animation: dart-fly 450ms 300ms both cubic-bezier(.5,0,.9,.5), dart-wobble 400ms 750ms forwards, dart-fall 600ms 1150ms forwards ease-in; }
-.bull-fx.play.tier-miss .fx-board { animation: board-pop 450ms both cubic-bezier(.3,1.6,.5,1); }
+.bull-fx.play:not(.tier-bull) .fx-board { animation: board-pop 550ms both cubic-bezier(.3,1.6,.5,1), board-thud 260ms 950ms forwards; }
+.bull-fx.play:not(.tier-bull) .fx-dart-wrap { animation: dart-fly 550ms 400ms both cubic-bezier(.5,0,.9,.5), dart-wobble 600ms 950ms forwards; }
+.bull-fx.play:not(.tier-bull) .fx-trail { animation: trail 550ms 400ms both linear; }
+.bull-fx.play:not(.tier-bull) .fx-text { animation: text-pop 450ms 1020ms both cubic-bezier(.3,1.8,.5,1); }
+.bull-fx.play.tier-miss .fx-dart-wrap { animation: dart-fly 550ms 400ms both cubic-bezier(.5,0,.9,.5), dart-wobble 500ms 950ms forwards, dart-fall 700ms 1450ms forwards ease-in; }
+.bull-fx.play.tier-miss .fx-board { animation: board-pop 550ms both cubic-bezier(.3,1.6,.5,1); }
 @keyframes dart-fall {
   from { transform: rotate(-28deg); opacity: 1; }
   to { transform: translate(-10%, 260%) rotate(70deg); opacity: 0; }

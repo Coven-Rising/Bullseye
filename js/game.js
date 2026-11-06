@@ -298,10 +298,10 @@ function setupSound() {
 // close the guess was; a bullseye gets the full show.
 const TIERS = {
   bull:   { ms: BULL_FX_MS, dist: 0,    text: "Bullseye!" },
-  close:  { ms: 1600,       dist: 0.22, text: "So close!" },
-  decent: { ms: 1600,       dist: 0.5,  text: "Not bad!" },
-  ouch:   { ms: 1600,       dist: 0.84, text: "Ouch!" },
-  miss:   { ms: 1900,       dist: 1.2,  text: "Missed!" },
+  close:  { ms: 2000,       dist: 0.22, text: "So close!" },
+  decent: { ms: 2000,       dist: 0.5,  text: "Not bad!" },
+  ouch:   { ms: 2000,       dist: 0.84, text: "Ouch!" },
+  miss:   { ms: 2300,       dist: 1.2,  text: "Missed!" },
 };
 function throwTier(points, bullseye) {
   if (bullseye) return "bull";
@@ -313,12 +313,12 @@ function throwTier(points, bullseye) {
 function throwSound(tier) {
   if (!soundOn) return;
   if (tier === "bull") return bullseyeSound();
-  whoosh(0.3, 0.45);
-  if (tier !== "miss") thunk(0.75);
-  if (tier === "close") { tone(1319, 0.85, 0.2); tone(1760, 1.0, 0.45); }
-  if (tier === "decent") tone(1047, 0.85, 0.4, "triangle", 0.12);
-  if (tier === "ouch") slide(320, 110, 0.85, 0.5);
-  if (tier === "miss") { thunk(0.8); buzzer(0.95, 0.55); }
+  whoosh(0.4, 0.55);
+  if (tier !== "miss") thunk(0.95);
+  if (tier === "close") { tone(1319, 1.05, 0.2); tone(1760, 1.2, 0.5); }
+  if (tier === "decent") tone(1047, 1.05, 0.45, "triangle", 0.12);
+  if (tier === "ouch") slide(320, 110, 1.05, 0.55);
+  if (tier === "miss") { thunk(1.0); buzzer(1.15, 0.6); }
 }
 function slide(from, to, start, dur) {
   const a = ctx(); if (!a) return;
