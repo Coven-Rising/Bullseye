@@ -34,7 +34,14 @@ function showQuestion() {
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
 
-  $("#q-progress").textContent = `Question ${state.index + 1} of ${state.questions.length}`;
+  const dots = $("#q-progress");
+  dots.innerHTML = "";
+  dots.setAttribute("aria-label", `Question ${state.index + 1} of ${state.questions.length}`);
+  state.questions.forEach((_, i) => {
+    const d = document.createElement("span");
+    d.className = i < state.index ? "dot done" : i === state.index ? "dot now" : "dot";
+    dots.appendChild(d);
+  });
   $("#q-category").textContent = q.category;
   $("#q-fermi").hidden = q.type !== "fermi";
   $("#q-prompt").textContent = q.prompt;
@@ -123,7 +130,7 @@ function showReveal(q, max, guess, points, bullseye) {
   $("#t-max").textContent = fmt(max);
 
   const last = state.index === state.questions.length - 1;
-  $("#next").textContent = last ? "See results" : "Next question";
+  $("#next").textContent = last ? "See results!" : "Next question";
   $("#next").onclick = () => {
     state.index++;
     if (state.index >= state.questions.length) showSummary(); else showQuestion();

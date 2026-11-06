@@ -5,21 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bullseye</title>
   <meta name="description" content="A daily estimation game. Ten questions, one slider, how close can you get?">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@500;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="top">
-    <h1 class="logo"><span class="ring" aria-hidden="true"></span>Bullseye</h1>
-    <span id="puzzle-no" class="puzzle-no"></span>
+    <div class="marquee">
+      <h1 class="logo">
+        <svg class="logo-mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="17" fill="#ffffff"/><circle cx="18" cy="18" r="12" fill="#ff3d5a"/><circle cx="18" cy="18" r="7" fill="#ffffff"/><circle cx="18" cy="18" r="3" fill="#ffc93c"/></svg>
+        Bullseye
+      </h1>
+      <span id="puzzle-no" class="puzzle-no"></span>
+    </div>
   </header>
 
   <main>
     <section id="screen-question" class="card" hidden>
       <div class="meta">
-        <span id="q-progress"></span>
+        <span id="q-progress" class="dots" role="img"></span>
         <span class="tags"><span id="q-fermi" class="tag fermi" hidden>Fermi estimate</span><span id="q-category" class="tag"></span></span>
       </div>
-      <h2 id="q-prompt" class="prompt"></h2>
+      <div class="bubble"><h2 id="q-prompt" class="prompt"></h2></div>
 
       <div class="readout">
         <button id="minus" class="nudge" aria-label="Decrease by 1">−</button>
@@ -30,18 +38,21 @@
       <input id="slider" type="range" min="0" aria-label="Drag to guess">
       <div class="scale"><span>0</span><span id="q-max"></span></div>
 
-      <button id="lock" class="primary">Lock it in</button>
+      <button id="lock" class="primary">Lock it in!</button>
     </section>
 
     <section id="screen-reveal" class="card" hidden>
       <p id="r-prompt" class="r-prompt"></p>
       <div class="points-row">
-        <div class="score">
+        <div class="tile tile-score">
           <span class="label">Score</span>
           <div class="points"><span id="r-points"></span><small>/100</small></div>
         </div>
-        <div id="r-badge" class="badge" hidden>🎯 Bullseye!</div>
-        <div id="r-accuracy" class="accuracy" hidden>
+        <div id="r-badge" class="tile tile-bull" hidden>
+          <span class="label">Bullseye!</span>
+          <svg class="bull-mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="17" fill="#ff3d5a"/><circle cx="18" cy="18" r="12" fill="#ffffff"/><circle cx="18" cy="18" r="7" fill="#ff3d5a"/><circle cx="18" cy="18" r="3" fill="#ffffff"/></svg>
+        </div>
+        <div id="r-accuracy" class="tile tile-off" hidden>
           <span class="label">Off by</span>
           <span id="r-accuracy-value" class="accuracy-value"></span>
         </div>
@@ -70,7 +81,7 @@
     </section>
 
     <section id="screen-summary" class="card" hidden>
-      <h2 class="prompt">Today's score</h2>
+      <h2 class="summary-title">Today's score</h2>
       <div class="points big"><span id="s-total"></span><small>/<span id="s-max"></span></small></div>
       <p id="s-squares" class="squares"></p>
       <button id="share" class="primary">Copy result</button>
