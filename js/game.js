@@ -230,21 +230,43 @@ function whoosh(start, dur) {
   n.connect(f).connect(g).connect(a.destination); n.start(t);
 }
 // Short clicks: a woody tick for the slider, a quicker, higher tick for count-ups.
-let lastTick = 0;
-function click(freq, gain, minGap) {
+// Each click is rendered once into a tiny buffer and replayed, which is far
+// cheaper than building new oscillators on every slider event (that caused
+// stutter on fast drags).
+const clickBuffers = {};
+let master;
+function clickBuffer(a, freq, ms) {
+  const key = `${freq}-${ms}`;
+  if (clickBuffers[key]) return clickBuffers[key];
+  const len = Math.floor(a.sampleRate * ms / 1000);
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    const t = i / a.sampleRate;
+    const env = Math.exp(-t * 900) * Math.min(1, i / 24); // quick attack, fast decay
+    d[i] = env * (Math.sin(2 * Math.PI * freq * t) * 0.8 + Math.sin(2 * Math.PI * freq * 2.7 * t) * 0.2);
+  }
+  return (clickBuffers[key] = buf);
+}
+const lastClick = {};
+function click(kind, freq, gain, minGap) {
   if (!soundOn) return;
   const now = performance.now();
-  if (now - lastTick < minGap) return;
-  lastTick = now;
+  if (now - (lastClick[kind] || 0) < minGap) return;
+  lastClick[kind] = now;
   const a = ctx(); if (!a) return;
-  const t = a.currentTime;
-  const o = a.createOscillator(), g = a.createGain();
-  o.type = "square"; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.02);
-  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t + 0.03);
+  if (!master) { master = a.createGain(); master.connect(a.destination); }
+  const src = a.createBufferSource(), g = a.createGain();
+  src.buffer = clickBuffer(a, freq, 30);
+  g.gain.value = gain;
+  src.connect(g).connect(master);
+  src.start(a.currentTime + 0.005);
 }
-const sliderTick = () => click(1400, 0.06, 28);
-const countTick = () => click(2600, 0.045, 38);
+const sliderTick = () => click("slider", 1800, 0.35, 35);
+const countTick = () => click("count", 3200, 0.22, 45);
+
+// Start audio on the first touch so the first tick isn't delayed.
+window.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true, capture: true });
 
 function bullseyeSound() {
   if (!soundOn) return;
