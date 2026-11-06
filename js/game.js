@@ -102,14 +102,15 @@ function showReveal(q, max, guess, points, bullseye) {
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
-  countUp($("#r-points"), points, (n) => String(Math.round(n)), bullseye ? BULL_FX_MS : 250);
   $("#r-answer").textContent = fmt(q.answer) + unit;
   $("#r-guess").textContent = fmt(guess) + unit;
   // Off by, as a share of the slider's scale (the same measure the score uses).
   const offPct = (Math.abs(guess - q.answer) / max) * 100;
   $("#r-accuracy").hidden = bullseye;
   const offText = (n) => `${n > 0 && n < 0.1 ? "0.1" : n.toFixed(1)}%`;
-  countUp($("#r-accuracy-value"), offPct, offText, 250);
+  for (const el of [$("#r-points"), $("#r-accuracy-value")]) { clearTimeout(el._t); cancelAnimationFrame(el._raf); }
+  $("#r-points").textContent = "0";
+  $("#r-accuracy-value").textContent = offText(0);
   $("#r-working").hidden = !q.working;
   $("#r-working").textContent = q.working ? `Working: ${q.working}` : "";
 
@@ -135,8 +136,11 @@ function showReveal(q, max, guess, points, bullseye) {
     el.classList.remove("anim");
     el.style.left = reducedMotion() ? pos(v) : "0%";
   }
-  if (!reducedMotion()) {
-    // Guess slides along the track, then the answer marker pops in.
+  // After the dart lands (or is skipped): count up the stats and slide the markers.
+  const runStats = () => {
+    countUp($("#r-points"), points, (n) => String(Math.round(n)), 150);
+    countUp($("#r-accuracy-value"), offPct, offText, 150);
+    if (reducedMotion()) return;
     void $("#t-guess").offsetWidth;
     requestAnimationFrame(() => {
       $("#t-guess").classList.add("anim");
@@ -144,8 +148,8 @@ function showReveal(q, max, guess, points, bullseye) {
       $("#t-answer").style.left = pos(q.answer);
       $("#t-answer").classList.add("anim");
     });
-  }
-  if (bullseye) playBullseye();
+  };
+  playThrow(throwTier(points, bullseye), runStats);
   $("#t-window").style.left = pos(Math.max(0, q.answer - tol));
   $("#t-window").style.width = `max(2px, ${(Math.min(max, q.answer + tol) - Math.max(0, q.answer - tol)) / max * 100}%)`;
   $("#t-max").textContent = fmt(max);
@@ -290,18 +294,75 @@ function setupSound() {
   };
 }
 
-// Full-screen dartboard: the board pops up, a dart flies into the bull.
-function playBullseye() {
-  bullseyeSound();
-  if (reducedMotion()) return;
+// Every answer throws a dart at the board. Where it lands depends on how
+// close the guess was; a bullseye gets the full show.
+const TIERS = {
+  bull:   { ms: BULL_FX_MS, dist: 0,    text: "Bullseye!" },
+  close:  { ms: 1600,       dist: 0.22, text: "So close!" },
+  decent: { ms: 1600,       dist: 0.5,  text: "Not bad!" },
+  ouch:   { ms: 1600,       dist: 0.84, text: "Ouch!" },
+  miss:   { ms: 1900,       dist: 1.2,  text: "Missed!" },
+};
+function throwTier(points, bullseye) {
+  if (bullseye) return "bull";
+  if (points >= 70) return "close";
+  if (points >= 30) return "decent";
+  if (points > 0) return "ouch";
+  return "miss";
+}
+function throwSound(tier) {
+  if (!soundOn) return;
+  if (tier === "bull") return bullseyeSound();
+  whoosh(0.3, 0.45);
+  if (tier !== "miss") thunk(0.75);
+  if (tier === "close") { tone(1319, 0.85, 0.2); tone(1760, 1.0, 0.45); }
+  if (tier === "decent") tone(1047, 0.85, 0.4, "triangle", 0.12);
+  if (tier === "ouch") slide(320, 110, 0.85, 0.5);
+  if (tier === "miss") { thunk(0.8); buzzer(0.95, 0.55); }
+}
+function slide(from, to, start, dur) {
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = "triangle"; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+function buzzer(start, dur) {
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + start;
+  for (const f of [98, 104]) {
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = "sawtooth"; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+    g.gain.setValueAtTime(0.12, t + dur - 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
+}
+function playThrow(tier, done) {
+  const cfg = TIERS[tier];
+  throwSound(tier);
+  if (reducedMotion()) { done(); return; }
   const fx = $("#bull-fx");
+  // Land the dart at a random angle, at the tier's distance from the centre.
+  const ang = Math.random() * Math.PI * 2;
+  const wrap = fx.querySelector(".fx-dart-wrap");
+  wrap.style.setProperty("--lx", `${Math.cos(ang) * cfg.dist * 50}%`);
+  wrap.style.setProperty("--ly", `${Math.sin(ang) * cfg.dist * 50}%`);
+  fx.querySelector(".fx-text").textContent = cfg.text;
+  fx.className = `bull-fx tier-${tier}`;
   fx.hidden = false;
-  fx.classList.remove("play");
   void fx.offsetWidth;
   fx.classList.add("play");
-  const close = () => { fx.hidden = true; fx.classList.remove("play"); };
+  let finished = false;
+  const close = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(fx._t);
+    fx.hidden = true; fx.classList.remove("play");
+    done();
+  };
   clearTimeout(fx._t);
-  fx._t = setTimeout(close, BULL_FX_MS + 200);
+  fx._t = setTimeout(close, cfg.ms + 200);
   fx.onclick = close;
 }
 
