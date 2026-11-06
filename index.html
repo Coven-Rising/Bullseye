@@ -17,7 +17,12 @@
         <svg class="logo-mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="17" fill="#ffffff"/><circle cx="18" cy="18" r="12" fill="#ff3d5a"/><circle cx="18" cy="18" r="7" fill="#ffffff"/><circle cx="18" cy="18" r="3" fill="#ffc93c"/></svg>
         Bullseye
       </h1>
-      <span id="puzzle-no" class="puzzle-no"></span>
+      <span class="top-right">
+        <span id="puzzle-no" class="puzzle-no"></span>
+        <button id="sound" class="sound-btn" aria-pressed="true" aria-label="Sound">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="waves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </span>
     </div>
   </header>
 
@@ -95,10 +100,38 @@
   <div id="bull-fx" class="bull-fx" hidden aria-hidden="true">
     <div class="fx-stage">
       <svg class="fx-board" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="99" fill="#1a0838"/><path d="M100 100L85.9 11.1A90 90 0 0 1 114.1 11.1Z" fill="#ff3d5a"/><path d="M100 100L114.1 11.1A90 90 0 0 1 140.9 19.8Z" fill="#1f9e5a"/><path d="M100 100L140.9 19.8A90 90 0 0 1 163.6 36.4Z" fill="#ff3d5a"/><path d="M100 100L163.6 36.4A90 90 0 0 1 180.2 59.1Z" fill="#1f9e5a"/><path d="M100 100L180.2 59.1A90 90 0 0 1 188.9 85.9Z" fill="#ff3d5a"/><path d="M100 100L188.9 85.9A90 90 0 0 1 188.9 114.1Z" fill="#1f9e5a"/><path d="M100 100L188.9 114.1A90 90 0 0 1 180.2 140.9Z" fill="#ff3d5a"/><path d="M100 100L180.2 140.9A90 90 0 0 1 163.6 163.6Z" fill="#1f9e5a"/><path d="M100 100L163.6 163.6A90 90 0 0 1 140.9 180.2Z" fill="#ff3d5a"/><path d="M100 100L140.9 180.2A90 90 0 0 1 114.1 188.9Z" fill="#1f9e5a"/><path d="M100 100L114.1 188.9A90 90 0 0 1 85.9 188.9Z" fill="#ff3d5a"/><path d="M100 100L85.9 188.9A90 90 0 0 1 59.1 180.2Z" fill="#1f9e5a"/><path d="M100 100L59.1 180.2A90 90 0 0 1 36.4 163.6Z" fill="#ff3d5a"/><path d="M100 100L36.4 163.6A90 90 0 0 1 19.8 140.9Z" fill="#1f9e5a"/><path d="M100 100L19.8 140.9A90 90 0 0 1 11.1 114.1Z" fill="#ff3d5a"/><path d="M100 100L11.1 114.1A90 90 0 0 1 11.1 85.9Z" fill="#1f9e5a"/><path d="M100 100L11.1 85.9A90 90 0 0 1 19.8 59.1Z" fill="#ff3d5a"/><path d="M100 100L19.8 59.1A90 90 0 0 1 36.4 36.4Z" fill="#1f9e5a"/><path d="M100 100L36.4 36.4A90 90 0 0 1 59.1 19.8Z" fill="#ff3d5a"/><path d="M100 100L59.1 19.8A90 90 0 0 1 85.9 11.1Z" fill="#1f9e5a"/><path d="M100 100L87.5 21.0A80 80 0 0 1 112.5 21.0Z" fill="#1a0838"/><path d="M100 100L112.5 21.0A80 80 0 0 1 136.3 28.7Z" fill="#f4ead2"/><path d="M100 100L136.3 28.7A80 80 0 0 1 156.6 43.4Z" fill="#1a0838"/><path d="M100 100L156.6 43.4A80 80 0 0 1 171.3 63.7Z" fill="#f4ead2"/><path d="M100 100L171.3 63.7A80 80 0 0 1 179.0 87.5Z" fill="#1a0838"/><path d="M100 100L179.0 87.5A80 80 0 0 1 179.0 112.5Z" fill="#f4ead2"/><path d="M100 100L179.0 112.5A80 80 0 0 1 171.3 136.3Z" fill="#1a0838"/><path d="M100 100L171.3 136.3A80 80 0 0 1 156.6 156.6Z" fill="#f4ead2"/><path d="M100 100L156.6 156.6A80 80 0 0 1 136.3 171.3Z" fill="#1a0838"/><path d="M100 100L136.3 171.3A80 80 0 0 1 112.5 179.0Z" fill="#f4ead2"/><path d="M100 100L112.5 179.0A80 80 0 0 1 87.5 179.0Z" fill="#1a0838"/><path d="M100 100L87.5 179.0A80 80 0 0 1 63.7 171.3Z" fill="#f4ead2"/><path d="M100 100L63.7 171.3A80 80 0 0 1 43.4 156.6Z" fill="#1a0838"/><path d="M100 100L43.4 156.6A80 80 0 0 1 28.7 136.3Z" fill="#f4ead2"/><path d="M100 100L28.7 136.3A80 80 0 0 1 21.0 112.5Z" fill="#1a0838"/><path d="M100 100L21.0 112.5A80 80 0 0 1 21.0 87.5Z" fill="#f4ead2"/><path d="M100 100L21.0 87.5A80 80 0 0 1 28.7 63.7Z" fill="#1a0838"/><path d="M100 100L28.7 63.7A80 80 0 0 1 43.4 43.4Z" fill="#f4ead2"/><path d="M100 100L43.4 43.4A80 80 0 0 1 63.7 28.7Z" fill="#1a0838"/><path d="M100 100L63.7 28.7A80 80 0 0 1 87.5 21.0Z" fill="#f4ead2"/><path d="M100 100L91.6 46.7A54 54 0 0 1 108.4 46.7Z" fill="#ff3d5a"/><path d="M100 100L108.4 46.7A54 54 0 0 1 124.5 51.9Z" fill="#1f9e5a"/><path d="M100 100L124.5 51.9A54 54 0 0 1 138.2 61.8Z" fill="#ff3d5a"/><path d="M100 100L138.2 61.8A54 54 0 0 1 148.1 75.5Z" fill="#1f9e5a"/><path d="M100 100L148.1 75.5A54 54 0 0 1 153.3 91.6Z" fill="#ff3d5a"/><path d="M100 100L153.3 91.6A54 54 0 0 1 153.3 108.4Z" fill="#1f9e5a"/><path d="M100 100L153.3 108.4A54 54 0 0 1 148.1 124.5Z" fill="#ff3d5a"/><path d="M100 100L148.1 124.5A54 54 0 0 1 138.2 138.2Z" fill="#1f9e5a"/><path d="M100 100L138.2 138.2A54 54 0 0 1 124.5 148.1Z" fill="#ff3d5a"/><path d="M100 100L124.5 148.1A54 54 0 0 1 108.4 153.3Z" fill="#1f9e5a"/><path d="M100 100L108.4 153.3A54 54 0 0 1 91.6 153.3Z" fill="#ff3d5a"/><path d="M100 100L91.6 153.3A54 54 0 0 1 75.5 148.1Z" fill="#1f9e5a"/><path d="M100 100L75.5 148.1A54 54 0 0 1 61.8 138.2Z" fill="#ff3d5a"/><path d="M100 100L61.8 138.2A54 54 0 0 1 51.9 124.5Z" fill="#1f9e5a"/><path d="M100 100L51.9 124.5A54 54 0 0 1 46.7 108.4Z" fill="#ff3d5a"/><path d="M100 100L46.7 108.4A54 54 0 0 1 46.7 91.6Z" fill="#1f9e5a"/><path d="M100 100L46.7 91.6A54 54 0 0 1 51.9 75.5Z" fill="#ff3d5a"/><path d="M100 100L51.9 75.5A54 54 0 0 1 61.8 61.8Z" fill="#1f9e5a"/><path d="M100 100L61.8 61.8A54 54 0 0 1 75.5 51.9Z" fill="#ff3d5a"/><path d="M100 100L75.5 51.9A54 54 0 0 1 91.6 46.7Z" fill="#1f9e5a"/><path d="M100 100L92.5 52.6A48 48 0 0 1 107.5 52.6Z" fill="#1a0838"/><path d="M100 100L107.5 52.6A48 48 0 0 1 121.8 57.2Z" fill="#f4ead2"/><path d="M100 100L121.8 57.2A48 48 0 0 1 133.9 66.1Z" fill="#1a0838"/><path d="M100 100L133.9 66.1A48 48 0 0 1 142.8 78.2Z" fill="#f4ead2"/><path d="M100 100L142.8 78.2A48 48 0 0 1 147.4 92.5Z" fill="#1a0838"/><path d="M100 100L147.4 92.5A48 48 0 0 1 147.4 107.5Z" fill="#f4ead2"/><path d="M100 100L147.4 107.5A48 48 0 0 1 142.8 121.8Z" fill="#1a0838"/><path d="M100 100L142.8 121.8A48 48 0 0 1 133.9 133.9Z" fill="#f4ead2"/><path d="M100 100L133.9 133.9A48 48 0 0 1 121.8 142.8Z" fill="#1a0838"/><path d="M100 100L121.8 142.8A48 48 0 0 1 107.5 147.4Z" fill="#f4ead2"/><path d="M100 100L107.5 147.4A48 48 0 0 1 92.5 147.4Z" fill="#1a0838"/><path d="M100 100L92.5 147.4A48 48 0 0 1 78.2 142.8Z" fill="#f4ead2"/><path d="M100 100L78.2 142.8A48 48 0 0 1 66.1 133.9Z" fill="#1a0838"/><path d="M100 100L66.1 133.9A48 48 0 0 1 57.2 121.8Z" fill="#f4ead2"/><path d="M100 100L57.2 121.8A48 48 0 0 1 52.6 107.5Z" fill="#1a0838"/><path d="M100 100L52.6 107.5A48 48 0 0 1 52.6 92.5Z" fill="#f4ead2"/><path d="M100 100L52.6 92.5A48 48 0 0 1 57.2 78.2Z" fill="#1a0838"/><path d="M100 100L57.2 78.2A48 48 0 0 1 66.1 66.1Z" fill="#f4ead2"/><path d="M100 100L66.1 66.1A48 48 0 0 1 78.2 57.2Z" fill="#1a0838"/><path d="M100 100L78.2 57.2A48 48 0 0 1 92.5 52.6Z" fill="#f4ead2"/><circle cx="100" cy="100" r="14" fill="#1f9e5a"/><circle cx="100" cy="100" r="6" fill="#ff3d5a"/></svg>
-      <svg class="fx-dart" viewBox="0 0 120 40" aria-hidden="true"><polygon points="0,20 14,18 14,22" fill="#d9d9e3"/><rect x="14" y="16" width="34" height="8" rx="3" fill="#ffc93c" stroke="#1a0838" stroke-width="2"/><rect x="48" y="18" width="34" height="4" fill="#ffffff" stroke="#1a0838" stroke-width="1.5"/><polygon points="82,20 112,2 120,6 98,20 120,34 112,38" fill="#ff3d5a" stroke="#1a0838" stroke-width="2" stroke-linejoin="round"/></svg>
+      <svg class="fx-rings" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="10" style="animation-delay:1400ms"/>
+        <circle cx="100" cy="100" r="31" style="animation-delay:1480ms"/>
+        <circle cx="100" cy="100" r="51" style="animation-delay:1560ms"/>
+        <circle cx="100" cy="100" r="67" style="animation-delay:1640ms"/>
+        <circle cx="100" cy="100" r="85" style="animation-delay:1720ms"/>
+        <circle cx="100" cy="100" r="97" style="animation-delay:1800ms"/>
+      </svg>
+      <div class="fx-shock"></div>
+      <div class="fx-dart-wrap">
+        <div class="fx-trail"></div>
+        <svg class="fx-dart" viewBox="0 0 160 40" aria-hidden="true">
+          <defs>
+            <linearGradient id="dTip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#b9bccb"/><stop offset="1" stop-color="#6c6f82"/></linearGradient>
+            <linearGradient id="dBarrel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ffc93c"/><stop offset=".75" stop-color="#c98a00"/><stop offset="1" stop-color="#7a5200"/></linearGradient>
+            <linearGradient id="dShaft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b5a96"/><stop offset="1" stop-color="#1a0838"/></linearGradient>
+            <linearGradient id="dFlight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8b9c"/><stop offset=".5" stop-color="#ff3d5a"/><stop offset="1" stop-color="#a8102a"/></linearGradient>
+          </defs>
+          <path d="M0 20 L18 16.5 L18 23.5 Z" fill="url(#dTip)"/>
+          <rect x="18" y="13" width="46" height="14" rx="5" fill="url(#dBarrel)" stroke="#1a0838" stroke-width="1.5"/>
+          <g stroke="#7a5200" stroke-width="1.2" opacity=".7"><line x1="27" y1="14" x2="27" y2="26"/><line x1="32" y1="14" x2="32" y2="26"/><line x1="37" y1="14" x2="37" y2="26"/><line x1="42" y1="14" x2="42" y2="26"/><line x1="47" y1="14" x2="47" y2="26"/></g>
+          <rect x="20" y="15" width="42" height="2.5" rx="1.2" fill="#ffffff" opacity=".7"/>
+          <rect x="64" y="17" width="44" height="6" rx="2" fill="url(#dShaft)" stroke="#1a0838" stroke-width="1.2"/>
+          <path d="M104 20 L130 1 L158 3 L140 20 Z" fill="url(#dFlight)" stroke="#1a0838" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M104 20 L130 39 L158 37 L140 20 Z" fill="url(#dFlight)" stroke="#1a0838" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M112 17 L131 5 L148 6" fill="none" stroke="#ffffff" stroke-width="1.5" opacity=".6" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div class="fx-burst"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <p class="fx-text">Bullseye!</p>
     </div>
+    <div class="fx-flash"></div>
   </div>
 
   <script type="module" src="js/game.js"></script>

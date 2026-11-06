@@ -174,8 +174,76 @@ function countUp(el, to, format, delay = 0) {
   }, delay);
 }
 
+// Sound: tiny synthesized effects, no audio files. Browsers allow it because
+// the player has just tapped "Lock it in".
+let audio;
+let soundOn = true;
+try { soundOn = localStorage.getItem("bullseye-sound") !== "off"; } catch {}
+function ctx() {
+  if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (audio.state === "suspended") audio.resume();
+  return audio;
+}
+function tone(freq, start, dur, type = "triangle", gain = 0.18) {
+  const a = ctx(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, a.currentTime + start);
+  g.gain.setValueAtTime(0.0001, a.currentTime + start);
+  g.gain.exponentialRampToValueAtTime(gain, a.currentTime + start + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + start + dur);
+  o.connect(g).connect(a.destination);
+  o.start(a.currentTime + start); o.stop(a.currentTime + start + dur + 0.05);
+}
+function thunk(start) {
+  const a = ctx(); if (!a) return;
+  // A low "thud" that drops in pitch, plus a short burst of noise for the hit.
+  const o = a.createOscillator(), g = a.createGain();
+  const t = a.currentTime + start;
+  o.type = "sine"; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.25);
+  g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + 0.35);
+  const buf = a.createBuffer(1, a.sampleRate * 0.08, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const n = a.createBufferSource(), ng = a.createGain();
+  n.buffer = buf; ng.gain.value = 0.35; n.connect(ng).connect(a.destination); n.start(t);
+}
+function whoosh(start, dur) {
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + start;
+  const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  n.buffer = buf; f.type = "bandpass"; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3000, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  n.connect(f).connect(g).connect(a.destination); n.start(t);
+}
+function bullseyeSound() {
+  if (!soundOn) return;
+  whoosh(0.7, 0.7);
+  thunk(1.4);
+  [[1047, 1.6], [1319, 1.75], [1568, 1.9], [2093, 2.05]].forEach(([f, t], i) => tone(f, t, i === 3 ? 0.7 : 0.25));
+}
+function setupSound() {
+  const btn = $("#sound");
+  const paint = () => {
+    btn.setAttribute("aria-pressed", String(soundOn));
+    btn.setAttribute("aria-label", soundOn ? "Sound on" : "Sound off");
+  };
+  paint();
+  btn.onclick = () => {
+    soundOn = !soundOn;
+    try { localStorage.setItem("bullseye-sound", soundOn ? "on" : "off"); } catch {}
+    paint();
+    if (soundOn) tone(1319, 0, 0.15);
+  };
+}
+
 // Full-screen dartboard: the board pops up, a dart flies into the bull.
 function playBullseye() {
+  bullseyeSound();
   if (reducedMotion()) return;
   const fx = $("#bull-fx");
   fx.hidden = false;
@@ -249,4 +317,5 @@ function showSummary() {
   };
 }
 
+setupSound();
 start();

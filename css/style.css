@@ -195,25 +195,40 @@ main { padding-block: 0 40px; }
 #screen-reveal:not([hidden]) .tile + .tile { animation-delay: 90ms; }
 @keyframes tile-in { from { transform: scale(0.7); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* Bullseye: dartboard pops up, dart flies in and sticks in the bull */
+/* Bullseye: dartboard pops up, a dart flies in from off-screen, slows,
+   then slams into the bull. Flash, shake, shockwave, rings light up. */
 .bull-fx {
   position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; cursor: pointer;
-  background: rgb(26 8 56 / 0.82);
+  background: radial-gradient(circle at 50% 45%, rgb(90 47 168 / 0.85), rgb(26 8 56 / 0.95) 70%);
+  overflow: hidden;
 }
 .fx-stage { position: relative; width: min(78vw, 320px); aspect-ratio: 1; max-width: 100%; }
-.fx-board { width: 100%; height: 100%; filter: drop-shadow(0 10px 0 #0b0320); }
-.fx-dart {
-  position: absolute; width: 56%; left: 50%; top: 50%;
-  transform-origin: 0% 50%; transform: translate(0, -50%) rotate(-28deg);
+.fx-board, .fx-rings { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fx-board { filter: drop-shadow(0 12px 0 #0b0320) drop-shadow(0 0 30px rgb(255 201 60 / 0.25)); }
+.fx-rings circle { fill: none; stroke: var(--gold); stroke-width: 3; opacity: 0; filter: drop-shadow(0 0 4px var(--gold)); }
+.fx-shock {
+  position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px;
+  border-radius: 50%; border: 6px solid var(--white); opacity: 0;
 }
+.fx-dart-wrap {
+  position: absolute; left: 50%; top: 50%; width: 62%; height: 0;
+  transform-origin: 0 0; transform: rotate(-28deg);
+}
+.fx-dart { position: absolute; left: 0; top: 0; width: 100%; transform: translateY(-50%); filter: drop-shadow(-6px 10px 4px rgb(11 3 32 / 0.55)); }
+.fx-trail {
+  position: absolute; left: 70%; top: -5px; width: 260%; height: 10px; border-radius: 5px;
+  background: linear-gradient(to right, rgb(255 255 255 / 0.9), rgb(255 201 60 / 0.5) 30%, transparent);
+  opacity: 0; filter: blur(2px);
+}
+.fx-flash { position: fixed; inset: 0; background: #ffffff; opacity: 0; pointer-events: none; }
 .fx-text {
-  position: absolute; left: 50%; bottom: -64px; margin: 0; transform: translateX(-50%);
-  font: 400 40px/1 var(--display); color: var(--gold); white-space: nowrap;
-  text-shadow: 0 4px 0 var(--night), 0 0 18px rgb(255 201 60 / 0.6);
+  position: absolute; left: 50%; bottom: -70px; margin: 0; transform: translateX(-50%);
+  font: 400 44px/1 var(--display); color: var(--gold); white-space: nowrap;
+  text-shadow: 0 5px 0 var(--night), 0 0 24px rgb(255 201 60 / 0.7);
 }
 .fx-burst { position: absolute; left: 50%; top: 50%; }
 .fx-burst i {
-  position: absolute; width: 10px; height: 22px; margin: -11px 0 0 -5px; border-radius: 5px;
+  position: absolute; width: 10px; height: 24px; margin: -12px 0 0 -5px; border-radius: 5px;
   background: var(--gold); opacity: 0;
 }
 .fx-burst i:nth-child(3n) { background: var(--white); }
@@ -224,29 +239,53 @@ main { padding-block: 0 40px; }
 .fx-burst i:nth-child(10) { --a: 270deg; } .fx-burst i:nth-child(11) { --a: 300deg; } .fx-burst i:nth-child(12) { --a: 330deg; }
 
 .bull-fx.play { animation: fx-fade 3000ms both; }
-.bull-fx.play .fx-board { animation: board-pop 700ms both cubic-bezier(.3,1.6,.5,1), board-thud 300ms 1350ms both; }
-.bull-fx.play .fx-dart { animation: dart-fly 550ms 800ms both cubic-bezier(.6,0,.9,.6), dart-wobble 600ms 1350ms both; }
-.bull-fx.play .fx-burst i { animation: burst 1000ms 1350ms both ease-out; }
-.bull-fx.play .fx-text { animation: text-pop 500ms 1450ms both cubic-bezier(.3,1.8,.5,1); }
+.bull-fx.play .fx-stage { animation: stage-shake 450ms 1400ms both; }
+.bull-fx.play .fx-board { animation: board-pop 700ms both cubic-bezier(.3,1.6,.5,1), board-thud 300ms 1400ms forwards; }
+.bull-fx.play .fx-dart-wrap { animation: dart-fly 700ms 700ms both linear, dart-wobble 700ms 1400ms forwards; }
+.bull-fx.play .fx-trail { animation: trail 700ms 700ms both linear; }
+.bull-fx.play .fx-flash { animation: flash 350ms 1400ms forwards ease-out; }
+.bull-fx.play .fx-shock { animation: shock 700ms 1400ms forwards ease-out; }
+.bull-fx.play .fx-rings circle { animation: ring-light 900ms both ease-out; }
+.bull-fx.play .fx-burst i { animation: burst 1000ms 1400ms forwards cubic-bezier(.1,.8,.3,1); }
+.bull-fx.play .fx-text { animation: text-pop 500ms 1550ms both cubic-bezier(.3,1.8,.5,1); }
 
 @keyframes fx-fade { 0% { opacity: 0; } 6% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes board-pop { from { transform: scale(0.2) rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes board-thud { 0%, 100% { transform: none; } 40% { transform: scale(0.95); } }
+@keyframes board-pop { from { transform: scale(0.2) rotate(-120deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes board-thud { 0%, 100% { transform: none; } 30% { transform: scale(0.93); } 60% { transform: scale(1.03); } }
+/* Fast approach from off-screen, slow-motion close in, then the final snap. */
 @keyframes dart-fly {
-  from { transform: translate(140%, -260%) rotate(-28deg) scale(1.6); opacity: 0; }
-  20% { opacity: 1; }
-  to { transform: translate(0, -50%) rotate(-28deg); opacity: 1; }
+  0%   { transform: rotate(-28deg) translate(260%, 0) scale(3.2); opacity: 0; }
+  10%  { opacity: 1; }
+  45%  { transform: rotate(-28deg) translate(40%, 0) scale(1.5); }
+  85%  { transform: rotate(-28deg) translate(12%, 0) scale(1.12); }
+  100% { transform: rotate(-28deg) translate(0, 0) scale(1); opacity: 1; }
 }
 @keyframes dart-wobble {
-  0%, 100% { transform: translate(0, -50%) rotate(-28deg); }
-  20% { transform: translate(0, -50%) rotate(-20deg); }
-  45% { transform: translate(0, -50%) rotate(-34deg); }
-  70% { transform: translate(0, -50%) rotate(-25deg); }
-  85% { transform: translate(0, -50%) rotate(-30deg); }
+  0%, 100% { transform: rotate(-28deg); }
+  15% { transform: rotate(-19deg); } 35% { transform: rotate(-35deg); }
+  55% { transform: rotate(-24deg); } 75% { transform: rotate(-31deg); } 90% { transform: rotate(-27deg); }
 }
+@keyframes trail { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 0.6; } 100% { opacity: 0; } }
+@keyframes flash { from { opacity: 0.85; } to { opacity: 0; } }
+@keyframes stage-shake {
+  0%, 100% { transform: none; } 15% { transform: translate(-8px, 5px); } 30% { transform: translate(7px, -6px); }
+  45% { transform: translate(-5px, -3px); } 60% { transform: translate(4px, 4px); } 80% { transform: translate(-2px, 1px); }
+}
+@keyframes shock { from { transform: scale(1); opacity: 0.95; } to { transform: scale(22); opacity: 0; border-width: 1px; } }
+@keyframes ring-light { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0.25; } }
 @keyframes burst {
   from { transform: rotate(var(--a)) translateY(0) scaleY(0.4); opacity: 1; }
-  to { transform: rotate(var(--a)) translateY(-150px) scaleY(1); opacity: 0; }
+  to { transform: rotate(var(--a)) translateY(-170px) scaleY(1); opacity: 0; }
 }
-@keyframes text-pop { from { transform: translateX(-50%) scale(0.3); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes text-pop { from { transform: translateX(-50%) scale(0.3) rotate(-8deg); opacity: 0; } to { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; } }
+
+.top-right { display: flex; align-items: center; gap: 10px; }
+.sound-btn {
+  width: 36px; height: 36px; padding: 6px; border-radius: 50%; cursor: pointer;
+  border: 3px solid var(--night); background: var(--white); color: var(--night);
+}
+.sound-btn svg { width: 100%; height: 100%; display: block; }
+.sound-btn .mute { display: none; }
+.sound-btn[aria-pressed="false"] .waves { display: none; }
+.sound-btn[aria-pressed="false"] .mute { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bull-fx { display: none !important; } }
