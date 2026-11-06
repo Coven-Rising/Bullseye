@@ -56,7 +56,13 @@ function showQuestion() {
   box.value = 0;
   updateFill();
 
-  slider.oninput = () => { box.value = Math.round(Number(slider.value)); updateFill(); };
+  let lastNotch = 0;
+  slider.oninput = () => {
+    box.value = Math.round(Number(slider.value)); updateFill();
+    // Tick each time the handle crosses one of 40 notches along the bar.
+    const notch = Math.round((Number(slider.value) / max) * 40);
+    if (notch !== lastNotch) { lastNotch = notch; sliderTick(); }
+  };
   box.oninput = () => {
     const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0)));
     slider.value = v; updateFill();
@@ -68,6 +74,7 @@ function showQuestion() {
 }
 
 function nudge(d, max) {
+  sliderTick();
   const box = $("#guess-box");
   const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0) + d));
   box.value = v; $("#slider").value = v; updateFill();
@@ -165,7 +172,9 @@ function countUp(el, to, format, delay = 0) {
     const step = (now) => {
       const t = Math.min(1, (now - start) / dur);
       const eased = 1 - Math.pow(1 - t, 3);
-      el.textContent = format(to * eased);
+      const text = format(to * eased);
+      if (text !== el.textContent) countTick();
+      el.textContent = text;
       if (t < 1) el._raf = requestAnimationFrame(step);
       else el.classList.add("pop");
     };
@@ -220,6 +229,23 @@ function whoosh(start, dur) {
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   n.connect(f).connect(g).connect(a.destination); n.start(t);
 }
+// Short clicks: a woody tick for the slider, a quicker, higher tick for count-ups.
+let lastTick = 0;
+function click(freq, gain, minGap) {
+  if (!soundOn) return;
+  const now = performance.now();
+  if (now - lastTick < minGap) return;
+  lastTick = now;
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = "square"; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.02);
+  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + 0.03);
+}
+const sliderTick = () => click(1400, 0.06, 28);
+const countTick = () => click(2600, 0.045, 38);
+
 function bullseyeSound() {
   if (!soundOn) return;
   whoosh(0.7, 0.7);
