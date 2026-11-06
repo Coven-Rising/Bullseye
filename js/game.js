@@ -94,13 +94,14 @@ function showReveal(q, max, guess, points, bullseye) {
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
-  $("#r-points").textContent = points;
+  countUp($("#r-points"), points, (n) => String(Math.round(n)), bullseye ? BULL_FX_MS : 250);
   $("#r-answer").textContent = fmt(q.answer) + unit;
   $("#r-guess").textContent = fmt(guess) + unit;
   // Off by, as a share of the slider's scale (the same measure the score uses).
   const offPct = (Math.abs(guess - q.answer) / max) * 100;
   $("#r-accuracy").hidden = bullseye;
-  $("#r-accuracy-value").textContent = `${offPct > 0 && offPct < 0.1 ? "0.1" : offPct.toFixed(1)}%`;
+  const offText = (n) => `${n > 0 && n < 0.1 ? "0.1" : n.toFixed(1)}%`;
+  countUp($("#r-accuracy-value"), offPct, offText, 250);
   $("#r-working").hidden = !q.working;
   $("#r-working").textContent = q.working ? `Working: ${q.working}` : "";
 
@@ -122,9 +123,21 @@ function showReveal(q, max, guess, points, bullseye) {
   const pos = (v) => `${(v / max) * 100}%`;
   for (const [sel, v] of [["#t-answer", q.answer], ["#t-guess", guess]]) {
     const el = $(sel);
-    el.style.left = pos(v);
     el.dataset.edge = v / max > 0.88 ? "end" : v / max < 0.12 ? "start" : "";
+    el.classList.remove("anim");
+    el.style.left = reducedMotion() ? pos(v) : "0%";
   }
+  if (!reducedMotion()) {
+    // Guess slides along the track, then the answer marker pops in.
+    void $("#t-guess").offsetWidth;
+    requestAnimationFrame(() => {
+      $("#t-guess").classList.add("anim");
+      $("#t-guess").style.left = pos(guess);
+      $("#t-answer").style.left = pos(q.answer);
+      $("#t-answer").classList.add("anim");
+    });
+  }
+  if (bullseye) playBullseye();
   $("#t-window").style.left = pos(Math.max(0, q.answer - tol));
   $("#t-window").style.width = `max(2px, ${(Math.min(max, q.answer + tol) - Math.max(0, q.answer - tol)) / max * 100}%)`;
   $("#t-max").textContent = fmt(max);
@@ -136,6 +149,43 @@ function showReveal(q, max, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+const BULL_FX_MS = 1500;
+const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// Count a number up from 0 over ~700ms, after an optional delay.
+function countUp(el, to, format, delay = 0) {
+  clearTimeout(el._t); cancelAnimationFrame(el._raf);
+  if (reducedMotion()) { el.textContent = format(to); return; }
+  el.textContent = format(0);
+  const dur = 700;
+  el._t = setTimeout(() => {
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = format(to * eased);
+      if (t < 1) el._raf = requestAnimationFrame(step);
+      else el.classList.add("pop");
+    };
+    el.classList.remove("pop");
+    el._raf = requestAnimationFrame(step);
+  }, delay);
+}
+
+// Full-screen dartboard: the board pops up, a dart flies into the bull.
+function playBullseye() {
+  if (reducedMotion()) return;
+  const fx = $("#bull-fx");
+  fx.hidden = false;
+  fx.classList.remove("play");
+  void fx.offsetWidth;
+  fx.classList.add("play");
+  const close = () => { fx.hidden = true; fx.classList.remove("play"); };
+  clearTimeout(fx._t);
+  fx._t = setTimeout(close, BULL_FX_MS + 200);
+  fx.onclick = close;
 }
 
 // "https://en.wikipedia.org/wiki/Mount_Everest" -> "Wikipedia, Mount Everest"
