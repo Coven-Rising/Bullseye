@@ -102,8 +102,12 @@ function showReveal(q, max, guess, points, bullseye) {
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
-  $("#r-answer").textContent = fmt(q.answer) + unit;
-  $("#r-guess").textContent = fmt(guess) + unit;
+  setValue($("#r-answer"), fmt(q.answer), q.unit);
+  setValue($("#r-guess"), fmt(guess), q.unit);
+  // The range of guesses that would have scored a bullseye.
+  const lo = Math.max(0, q.answer - tol), hi = Math.min(max, q.answer + tol);
+  setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
+  $("#r-range-note").textContent = tol === 0 ? "Exact answer only" : `Within ±${fmt(tol)}`;
   // Off by, as a share of the slider's scale (the same measure the score uses).
   const offPct = (Math.abs(guess - q.answer) / max) * 100;
   $("#r-accuracy").hidden = bullseye;
@@ -161,6 +165,17 @@ function showReveal(q, max, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+// A number with its unit in smaller type, e.g. "299,792 km/s".
+function setValue(el, text, unit) {
+  el.textContent = text;
+  if (unit) {
+    const u = document.createElement("span");
+    u.className = "unit";
+    u.textContent = ` ${unit}`;
+    el.appendChild(u);
+  }
 }
 
 const BULL_FX_MS = 3000;
