@@ -19,6 +19,7 @@ async function start() {
   const pool = await (await fetch("data/questions.json")).json();
   const params = new URLSearchParams(location.search);
   state.day = params.has("day") ? Number(params.get("day")) : puzzleNumber(new Date());
+  state.pool = pool;
   state.questions = pickDaily(pool, state.day, QUESTIONS_PER_DAY);
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
@@ -142,6 +143,18 @@ function showSummary() {
     li.querySelector(".s-pts").textContent = r.points;
     list.appendChild(li);
   });
+  // Prototype only: jump to the next set of questions to keep playing.
+  $("#practice").onclick = () => {
+    state.day++;
+    state.questions = pickDaily(state.pool, state.day, QUESTIONS_PER_DAY);
+    state.results = [];
+    state.index = 0;
+    $("#puzzle-no").textContent = `#${state.day} (practice)`;
+    $("#share").textContent = "Copy result";
+    $("#share-text").hidden = true;
+    showQuestion();
+    window.scrollTo(0, 0);
+  };
   $("#share").onclick = async () => {
     const text = shareText();
     try { await navigator.clipboard.writeText(text); $("#share").textContent = "Copied!"; }
