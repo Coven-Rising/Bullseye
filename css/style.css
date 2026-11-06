@@ -186,8 +186,8 @@ main { padding-block: 0 40px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* ---------- Reveal animations ---------- */
-.t-mark.anim { transition: left 700ms cubic-bezier(.2,.8,.2,1); }
-#t-answer.anim { animation: drop-in 380ms 650ms both cubic-bezier(.3,1.6,.5,1); transition: none; }
+.t-mark.anim { transition: left 1100ms cubic-bezier(.2,.8,.2,1); }
+#t-answer.anim { animation: drop-in 450ms 1100ms both cubic-bezier(.3,1.6,.5,1); transition: none; }
 @keyframes drop-in { from { transform: translateY(-24px) scaleY(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
 .pop { animation: pop 260ms cubic-bezier(.3,1.8,.5,1); display: inline-block; }
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.22); } 100% { transform: scale(1); } }
@@ -223,13 +223,13 @@ main { padding-block: 0 40px; }
 .fx-burst i:nth-child(7) { --a: 180deg; } .fx-burst i:nth-child(8) { --a: 210deg; } .fx-burst i:nth-child(9) { --a: 240deg; }
 .fx-burst i:nth-child(10) { --a: 270deg; } .fx-burst i:nth-child(11) { --a: 300deg; } .fx-burst i:nth-child(12) { --a: 330deg; }
 
-.bull-fx.play { animation: fx-fade 1500ms both; }
-.bull-fx.play .fx-board { animation: board-pop 420ms both cubic-bezier(.3,1.6,.5,1), board-thud 220ms 760ms both; }
-.bull-fx.play .fx-dart { animation: dart-fly 380ms 400ms both cubic-bezier(.6,0,.9,.6), dart-wobble 300ms 780ms both; }
-.bull-fx.play .fx-burst i { animation: burst 650ms 760ms both ease-out; }
-.bull-fx.play .fx-text { animation: text-pop 400ms 820ms both cubic-bezier(.3,1.8,.5,1); }
+.bull-fx.play { animation: fx-fade 3000ms both; }
+.bull-fx.play .fx-board { animation: board-pop 700ms both cubic-bezier(.3,1.6,.5,1), board-thud 300ms 1350ms both; }
+.bull-fx.play .fx-dart { animation: dart-fly 550ms 800ms both cubic-bezier(.6,0,.9,.6), dart-wobble 600ms 1350ms both; }
+.bull-fx.play .fx-burst i { animation: burst 1000ms 1350ms both ease-out; }
+.bull-fx.play .fx-text { animation: text-pop 500ms 1450ms both cubic-bezier(.3,1.8,.5,1); }
 
-@keyframes fx-fade { 0% { opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fx-fade { 0% { opacity: 0; } 6% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes board-pop { from { transform: scale(0.2) rotate(-90deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes board-thud { 0%, 100% { transform: none; } 40% { transform: scale(0.95); } }
 @keyframes dart-fly {
@@ -239,8 +239,10 @@ main { padding-block: 0 40px; }
 }
 @keyframes dart-wobble {
   0%, 100% { transform: translate(0, -50%) rotate(-28deg); }
-  30% { transform: translate(0, -50%) rotate(-22deg); }
-  65% { transform: translate(0, -50%) rotate(-32deg); }
+  20% { transform: translate(0, -50%) rotate(-20deg); }
+  45% { transform: translate(0, -50%) rotate(-34deg); }
+  70% { transform: translate(0, -50%) rotate(-25deg); }
+  85% { transform: translate(0, -50%) rotate(-30deg); }
 }
 @keyframes burst {
   from { transform: rotate(var(--a)) translateY(0) scaleY(0.4); opacity: 1; }

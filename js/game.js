@@ -151,15 +151,15 @@ function showReveal(q, max, guess, points, bullseye) {
   $("#next").focus();
 }
 
-const BULL_FX_MS = 1500;
+const BULL_FX_MS = 3000;
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-// Count a number up from 0 over ~700ms, after an optional delay.
+// Count a number up from 0 over ~1.1s, after an optional delay.
 function countUp(el, to, format, delay = 0) {
   clearTimeout(el._t); cancelAnimationFrame(el._raf);
   if (reducedMotion()) { el.textContent = format(to); return; }
   el.textContent = format(0);
-  const dur = 700;
+  const dur = 1100;
   el._t = setTimeout(() => {
     const start = performance.now();
     const step = (now) => {
