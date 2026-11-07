@@ -498,3 +498,10 @@ main { padding-block: 0 40px; }
   .calc-keys button { height: 40px; font-size: 16px; }
   .notes-text { height: 280px; }
 }
+
+/* Results on wide screens: score, crowd and countdown on the left, answers on the right. */
+@media (min-width: 1000px) {
+  body:has(#screen-summary:not([hidden])) :is(.top, main) { max-width: 1060px; }
+  .s-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .s-side .s-list-title { margin-top: 16px; }
+}

@@ -168,6 +168,8 @@
 
     <section id="screen-summary" class="card" hidden>
       <h2 id="s-title" class="summary-title"></h2>
+      <div class="s-cols">
+      <div class="s-main">
       <div class="tile tile-score summary-score">
         <span class="label">Today's score</span>
         <div class="points big"><span id="s-total"></span><small>/<span id="s-max"></span></small></div>
@@ -199,9 +201,13 @@
         <span class="label">Next puzzle in</span>
         <span id="s-countdown" class="countdown-n">--:--:--</span>
       </div>
+      </div>
+      <div class="s-side">
       <h3 class="s-list-title">Your answers</h3>
       <ol id="s-list" class="ans-list"></ol>
       <button id="practice" class="secondary">Play another set (practice)</button>
+      </div>
+      </div>
     </section>
   </main>
 
