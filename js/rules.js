@@ -4,11 +4,11 @@ export const LAUNCH_DATE = "2026-11-07"; // puzzle #1
 // Bullseye: within this share of the real answer (years: of the slider window).
 export const BULLSEYE_PCT = { fact: 0.02, fermi: 0.05, year: 0.005 };
 // Counts are scored by how many times off you are, so too high and too low are
-// treated alike: 2x and half score the same. 10% off ~82, 1.5x ~57, 2x ~33, 3x 0.
-export const ZERO_RATIO = 3;     // 3x too high or a third of the answer scores 0
+// treated alike: 2x and half score the same. 10% off ~83, 1.5x ~61, 2x ~40, 3x ~11.
+export const ZERO_RATIO = 3.5;   // 3.5x too high, or under a third of the answer, scores 0
 // Years are scored by distance as a share of the slider window, with a curve.
-export const YEAR_ZERO_AT = 0.4; // 40% of the window off scores 0 (40 yrs in a 100-yr window)
-export const YEAR_CURVE = 1.4;   // >1 is kinder to near misses: 10 yrs off in 100 scores ~77
+export const YEAR_ZERO_AT = 0.45; // 45% of the window off scores 0 (45 yrs in a 100-yr window)
+export const YEAR_CURVE = 1.4;   // >1 is kinder to near misses: 10 yrs off in 100 scores ~79
 
 // Days since launch, by the player's local calendar date. #1 on launch day.
 export function puzzleNumber(date) {
