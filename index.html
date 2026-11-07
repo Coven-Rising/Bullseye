@@ -28,14 +28,36 @@
   </header>
 
   <dialog id="rules" class="rules" aria-labelledby="rules-title">
-    <h2 id="rules-title" class="rules-title">How to play</h2>
-    <ul class="how rules-list">
-      <li><span class="how-n">10</span><span><b>Ten questions a day.</b> Everyone gets the same ones, and a new set unlocks at midnight.</span></li>
-      <li><span class="how-n">↔</span><span><b>Drag the slider</b> to your guess, then use + and − or type a number to fine-tune. The scale fits each question, and the answer can be anywhere on it.</span></li>
-      <li><span class="how-n">🎯</span><span><b>Lock it in.</b> Land within 2% of the real answer for a bullseye and 100 points. The further off, the fewer points: 10% off scores about 80, and 50% off scores 0. Small numbers (under 50) need to be exact.</span></li>
-      <li><span class="how-n">?</span><span><b>Two twists.</b> <i>Year</i> questions use a range of years, so a bullseye needs the exact year. <i>Fermi estimates</i> are worked out from things you know, have a wider 5% bullseye, and show the working after.</span></li>
-      <li><span class="how-n">🔥</span><span><b>Up to 1,000 points a day.</b> Come back daily to build your streak.</span></li>
-    </ul>
+    <div class="rules-banner"><h2 id="rules-title" tabindex="-1" autofocus>How to play</h2></div>
+    <ol class="steps">
+      <li class="step">
+        <span class="step-n">1</span>
+        <div><h3>Ten questions a day</h3><p>Same set for everyone, fresh at midnight. Keep the streak alive!</p></div>
+      </li>
+      <li class="step">
+        <span class="step-n">2</span>
+        <div>
+          <h3>Slide to guess</h3>
+          <p>Drag the target, or tap + and − to fine-tune.</p>
+          <div class="demo" aria-hidden="true">
+            <span id="demo-num" class="demo-num">236</span>
+            <div class="demo-track"><span id="demo-fill" class="demo-fill"></span><span id="demo-handle" class="demo-handle"></span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-n">3</span>
+        <div><h3>Lock it in</h3><p>The closer you get, the more you score. Nail it for a <b class="hl">bullseye!</b></p></div>
+      </li>
+      <li class="step">
+        <span class="step-n">4</span>
+        <div>
+          <h3>Watch for twists</h3>
+          <div class="twists"><p class="twist"><span class="chip">Year</span> Name the year.</p>
+          <p class="twist"><span class="chip chip-fermi">Fermi</span> Work it out.</p></div>
+        </div>
+      </li>
+    </ol>
     <form method="dialog"><button class="primary">Let's play!</button></form>
   </dialog>
 

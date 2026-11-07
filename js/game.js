@@ -37,7 +37,31 @@ function seenRules() { try { return localStorage.getItem(RULES_KEY) === "1"; } c
 function showRules() {
   const d = $("#rules");
   if (!d.open) d.showModal();
-  d.addEventListener("close", () => { try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+  d.scrollTop = 0;
+  const stop = playDemo();
+  d.addEventListener("close", () => { stop(); try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+}
+
+// The mini slider in step 2 glides between guesses, like a player lining one up.
+function playDemo() {
+  const stops = [0.47, 0.18, 0.74, 0.55, 0.62, 0.47];
+  const set = (p) => {
+    $(".demo").style.setProperty("--p", `${(p * 100).toFixed(2)}%`);
+    $("#demo-num").textContent = Math.round(p * 500);
+  };
+  set(stops[0]);
+  if (reducedMotion()) return () => {};
+  let raf, i = 0, t0 = performance.now();
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+  const tick = (now) => {
+    const t = (now - t0) / 1100; // 0-0.7 move, then hold
+    const a = stops[i], b = stops[(i + 1) % stops.length];
+    set(a + (b - a) * ease(Math.min(1, t / 0.7)));
+    if (t >= 1) { i = (i + 1) % (stops.length - 1); t0 = now; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(raf);
 }
 $("#help").onclick = showRules;
 
