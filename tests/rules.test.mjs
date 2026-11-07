@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
+import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, crowdStanding, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
 const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
@@ -112,4 +112,12 @@ test("big numbers shorten to 3 significant figures, the guess box keeps every di
   assert.equal(formatValue({ type: "year" }, 1853, { full: true }), "1853");
   assert.equal(parseGuess("3,000,000"), 3000000);
   assert.equal(parseGuess(""), 0);
+});
+
+test("crowd standing: better than X%, top Y%", () => {
+  assert.deepEqual(crowdStanding({ players: 200, below: 146 }), { players: 200, better: 73, top: 27, early: false });
+  assert.equal(crowdStanding({ players: 200, below: 199 }).top, 1);
+  assert.equal(crowdStanding({ players: 200, below: 0 }).better, 0);
+  assert.equal(crowdStanding({ players: 3, below: 1 }).early, true);
+  assert.equal(crowdStanding({ players: 0, below: 0 }), null);
 });

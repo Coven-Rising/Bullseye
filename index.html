@@ -135,6 +135,19 @@
         <div class="stat"><span id="st-best" class="stat-n"></span><span class="stat-l">Best</span></div>
         <div class="stat"><span id="st-bulls" class="stat-n"></span><span class="stat-l">Bullseyes</span></div>
       </div>
+      <div id="s-crowd" class="crowd" hidden>
+        <p id="c-loading" class="crowd-loading">Comparing with other players…</p>
+        <div id="c-body" hidden>
+          <div class="crowd-head">
+            <span id="c-top" class="crowd-top"></span>
+            <span id="c-line" class="crowd-line"></span>
+          </div>
+          <div class="chart" role="img" id="c-chart-wrap">
+            <div id="c-chart" class="chart-bars"></div>
+            <div class="chart-axis"><span>0</span><span>500</span><span>1000</span></div>
+          </div>
+        </div>
+      </div>
       <button id="share" class="primary">Copy result</button>
       <textarea id="share-text" class="share-text" rows="3" readonly hidden aria-label="Your result"></textarea>
       <div class="countdown">
@@ -142,7 +155,7 @@
         <span id="s-countdown" class="countdown-n">--:--:--</span>
       </div>
       <h3 class="s-list-title">Your answers</h3>
-      <ol id="s-list" class="s-list"></ol>
+      <ol id="s-list" class="ans-list"></ol>
       <button id="practice" class="secondary">Play another set (practice)</button>
     </section>
   </main>

@@ -1,5 +1,5 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess, crowdStanding } from "./rules.js";
 
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -546,13 +546,20 @@ function showSummary() {
   list.innerHTML = "";
   state.results.forEach((r, i) => {
     const q = state.questions[i];
+    const tier = r.bullseye ? "bull" : r.points >= 70 ? "good" : r.points >= 30 ? "ok" : "miss";
     const li = document.createElement("li");
-    li.innerHTML = `<span class="s-sq"></span><span class="s-q"></span><span class="s-pts"></span>`;
-    li.querySelector(".s-sq").textContent = shareSquare(r);
-    li.querySelector(".s-q").textContent = `${q.prompt} ${formatValue(q, q.answer)}${q.unit ? " " + q.unit : ""} (you: ${formatValue(q, r.guess)})`;
-    li.querySelector(".s-pts").textContent = r.points;
+    li.className = `ans ans-${tier}`;
+    li.innerHTML = `<span class="ans-n"></span><p class="ans-q"></p><span class="ans-pts"></span>
+      <p class="ans-v"><span class="ans-real"><small>Answer</small> <b></b></span><span class="ans-you"><small>You</small> <b></b></span></p>`;
+    li.querySelector(".ans-n").textContent = i + 1;
+    li.querySelector(".ans-q").textContent = q.prompt;
+    const unit = q.unit ? ` ${q.unit}` : "";
+    li.querySelector(".ans-real b").textContent = formatValue(q, q.answer) + unit;
+    li.querySelector(".ans-you b").textContent = formatValue(q, r.guess);
+    li.querySelector(".ans-pts").textContent = r.bullseye ? "🎯 100" : r.points;
     list.appendChild(li);
   });
+  showCrowd(state.day, total, !state.practice);
   // Practice replays an earlier day. The preview build (window.BULLSEYE_PREVIEW)
   // can also step forward into upcoming days for testing.
   const today = puzzleNumber(new Date());
@@ -581,6 +588,55 @@ function showSummary() {
       $("#share").textContent = "Copy the text below";
     }
   };
+}
+
+// "Better than X% of players" and today's score graph, from /api/scores.
+// Each device sends its score once per day. If the API isn't there (local
+// copies, or no database yet) the panel just stays hidden.
+async function showCrowd(day, total, submit) {
+  const box = $("#s-crowd");
+  box.hidden = false;
+  $("#c-loading").hidden = false;
+  $("#c-body").hidden = true;
+  const key = `bullseye-sent-${day}`;
+  let sent = false;
+  try { sent = localStorage.getItem(key) === "1"; } catch {}
+  let data;
+  try {
+    const res = submit && !sent
+      ? await fetch("api/scores", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ day, total }) })
+      : await fetch(`api/scores?day=${day}&total=${total}`);
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+    if (submit && !sent) try { localStorage.setItem(key, "1"); } catch {}
+  } catch { box.hidden = true; return; }
+  if (state.day !== day) return; // moved on to another set meanwhile
+  const s = crowdStanding(data);
+  if (!s) { box.hidden = true; return; }
+  const who = submit ? "today's" : `puzzle #${day}'s`;
+  if (s.early) {
+    $("#c-top").textContent = `Player #${s.players}`;
+    $("#c-line").textContent = `You're one of the first ${s.players} ${s.players === 1 ? "player" : "players"} on #${day}. Check back later to see where you rank!`;
+  } else {
+    $("#c-top").textContent = `Top ${s.top}%`;
+    $("#c-line").textContent = `${submit ? "You beat" : "You'd beat"} ${s.better}% of ${who} ${s.players.toLocaleString("en-US")} players`;
+  }
+  // Graph: players per 50 points, with your bar lit up.
+  const chart = $("#c-chart");
+  chart.innerHTML = "";
+  const peak = Math.max(...data.bins, 1);
+  const mine = Math.min(data.bins.length - 1, Math.floor(total / 50));
+  data.bins.forEach((n, i) => {
+    const bar = document.createElement("span");
+    bar.className = i === mine ? "bar you" : "bar";
+    bar.style.setProperty("--h", `${Math.max(n ? 6 : 2, (n / peak) * 100)}%`);
+    bar.style.animationDelay = `${i * 25}ms`;
+    if (i === mine) bar.innerHTML = "<em>You</em>";
+    chart.appendChild(bar);
+  });
+  $("#c-chart-wrap").setAttribute("aria-label", `Score graph: ${s.players} players, you scored ${total}`);
+  $("#c-loading").hidden = true;
+  $("#c-body").hidden = false;
 }
 
 setupSound();
