@@ -180,3 +180,49 @@ export function crowdStanding(data, total) {
   if (!data || !(data.players > 1) || data.average == null) return null;
   return { average: data.average, diff: total - data.average, bins: data.bins };
 }
+
+// Scratchpad calculator: + − × ÷, brackets, decimals and unary minus.
+// Commas in numbers are ignored. Returns null for anything incomplete or
+// invalid (including division by zero), so the display can just wait.
+export function calculate(expr) {
+  const src = String(expr).replace(/,/g, "").replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
+  const tokens = src.match(/\d*\.?\d+(?:e[+-]?\d+)?|[-+*/()]|\S/gi) || [];
+  let i = 0;
+  const peek = () => tokens[i];
+  const fail = () => { throw new Error("bad"); };
+  const factor = () => {
+    const t = tokens[i++];
+    if (t === "-") return -factor();
+    if (t === "+") return factor();
+    if (t === "(") { const v = sum(); if (tokens[i++] !== ")") fail(); return v; }
+    if (t != null && /^\d*\.?\d+(e[+-]?\d+)?$/i.test(t)) return Number(t);
+    return fail();
+  };
+  const product = () => {
+    let v = factor();
+    while (peek() === "*" || peek() === "/") {
+      const op = tokens[i++], r = factor();
+      if (op === "/" && r === 0) fail();
+      v = op === "*" ? v * r : v / r;
+    }
+    return v;
+  };
+  const sum = () => {
+    let v = product();
+    while (peek() === "+" || peek() === "-") v = tokens[i++] === "+" ? v + product() : v - product();
+    return v;
+  };
+  try {
+    if (!tokens.length) return null;
+    const v = sum();
+    return i === tokens.length && Number.isFinite(v) ? v : null;
+  } catch { return null; }
+}
+
+// A calculator result for display: commas, up to 6 decimals, no float noise.
+export function formatCalc(n) {
+  if (n == null) return "";
+  const clean = Number(n.toPrecision(12));
+  if (Math.abs(clean) >= 1e15) return clean.toExponential(4);
+  return clean.toLocaleString("en-US", { maximumFractionDigits: 6 });
+}

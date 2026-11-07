@@ -1,5 +1,5 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess, crowdStanding } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess, crowdStanding, calculate, formatCalc } from "./rules.js";
 
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -27,19 +27,25 @@ async function start() {
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
-  if (state.index >= state.questions.length) showSummary(); else showStart();
-  if (!seenRules()) showRules();
+  // The game loads behind the how-to-play popup; Play just closes it.
+  if (state.index >= state.questions.length) showSummary();
+  else { showQuestion(); showRules(); }
 }
 
 // How-to-play popup: opens by itself on a player's first visit, and from the ? button.
-const RULES_KEY = "bullseye-seen-rules";
-function seenRules() { try { return localStorage.getItem(RULES_KEY) === "1"; } catch { return false; } }
 function showRules() {
   const d = $("#rules");
+  const playing = !$("#screen-question").hidden || !$("#screen-reveal").hidden;
+  const streak = currentStreak(loadStats(), state.day);
+  const line = $("#rules-streak");
+  line.hidden = !playing || streak < 1;
+  line.textContent = `🔥 ${streak}-day streak. Keep it going!`;
+  $("#play").textContent = !playing ? "Got it" : state.index > 0 ? `Continue #${state.day}` : `Play #${state.day}`;
+  $("#play").onclick = () => { if (soundOn) ctx(); };
   if (!d.open) d.showModal();
   d.scrollTop = 0;
   const stop = playDemo();
-  d.addEventListener("close", () => { stop(); try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+  d.addEventListener("close", () => { stop(); window.scrollTo(0, 0); }, { once: true });
 }
 
 // The mini slider in step 2 glides between guesses, like a player lining one up.
@@ -64,18 +70,6 @@ function playDemo() {
   return () => cancelAnimationFrame(raf);
 }
 $("#help").onclick = showRules;
-
-function showStart() {
-  for (const id of ["#screen-question", "#screen-reveal", "#screen-summary"]) $(id).hidden = true;
-  $("#screen-start").hidden = false;
-  const st = loadStats();
-  const streak = currentStreak(st, state.day);
-  const line = $("#start-streak");
-  line.hidden = streak < 1;
-  line.textContent = `🔥 ${streak}-day streak. Keep it going!`;
-  $("#play").textContent = state.index > 0 ? `Continue #${state.day}` : `Play #${state.day}`;
-  $("#play").onclick = () => { if (soundOn) ctx(); showQuestion(); window.scrollTo(0, 0); };
-}
 
 // Personal stats, kept on this device only.
 const STATS_KEY = "bullseye-stats";
@@ -119,7 +113,6 @@ function showQuestion() {
   const span = max - min;
   const show = (n) => formatValue(q, n);
   const clamp = (v) => Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
-  $("#screen-start").hidden = true;
   $("#screen-question").hidden = false;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
@@ -168,6 +161,12 @@ function showQuestion() {
     setBox(v); slider.value = v; updateFill();
     sliderTick((v - min) / span);
   };
+  tools.useGuess = (n) => {
+    const v = clamp(n);
+    setBox(v); slider.value = v; updateFill();
+    sliderTick((v - min) / span);
+  };
+  tools.reset();
   $("#minus").onclick = () => nudge(-step);
   $("#plus").onclick = () => nudge(step);
   $("#lock").onclick = () => lock(q, range, clamp(parseGuess(box.value)));
@@ -550,7 +549,6 @@ function shareText() {
 }
 
 function showSummary() {
-  $("#screen-start").hidden = true;
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = false;
@@ -665,6 +663,61 @@ async function showCrowd(day, total, submit) {
   $("#c-loading").hidden = true;
   $("#c-body").hidden = false;
 }
+
+// Scratchpad: a calculator and a notepad that share one panel. What you type
+// stays put while the panel is closed, and both clear at each new question.
+const tools = (() => {
+  const panel = $("#tool-panel");
+  const btns = { calc: $("#tool-calc"), notes: $("#tool-notes") };
+  let tab = "calc", expr = "";
+  const result = () => calculate(expr);
+  const render = () => {
+    const r = result();
+    $("#calc-expr").textContent = expr;
+    $("#calc-out").textContent = expr ? (r == null ? "…" : formatCalc(r)) : "0";
+    $("#calc-use").disabled = r == null || r < 0;
+  };
+  const show = (name) => {
+    tab = name;
+    panel.hidden = false;
+    $("#tab-calc").hidden = name !== "calc";
+    $("#tab-notes").hidden = name !== "notes";
+    for (const t of document.querySelectorAll(".tool-tab")) t.setAttribute("aria-selected", String(t.dataset.tab === name));
+    for (const [k, b] of Object.entries(btns)) b.setAttribute("aria-expanded", String(k === name));
+    if (name === "notes") $("#notes-text").focus({ preventScroll: true });
+  };
+  const close = () => {
+    panel.hidden = true;
+    for (const b of Object.values(btns)) b.setAttribute("aria-expanded", "false");
+  };
+  const press = (k) => {
+    if (k === "C") expr = "";
+    else if (k === "⌫") expr = expr.slice(0, -1);
+    else if (k === "=") { const r = result(); if (r != null) expr = String(Number(r.toPrecision(12))); }
+    else expr += k;
+    render();
+  };
+  for (const [k, b] of Object.entries(btns)) b.onclick = () => (!panel.hidden && tab === k ? close() : show(k));
+  for (const t of document.querySelectorAll(".tool-tab")) t.onclick = () => show(t.dataset.tab);
+  $("#tool-close").onclick = close;
+  for (const key of document.querySelectorAll(".calc-keys button")) key.onclick = () => press(key.dataset.k);
+  $("#calc-use").onclick = () => { const r = result(); if (r != null) { api.useGuess(Math.round(r)); close(); } };
+  // Typing works while the calculator is open, unless you're in a text box.
+  document.addEventListener("keydown", (e) => {
+    if (panel.hidden || tab !== "calc" || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest?.("input, textarea")) return;
+    if (e.key === "Enter" && e.target.closest?.("button")) return; // that button's own click
+    const map = { "*": "×", x: "×", "/": "÷", "-": "−", Enter: "=", Backspace: "⌫", Escape: "C" };
+    const k = map[e.key] ?? (/^[0-9.+()=]$/.test(e.key) ? e.key : null);
+    if (k) { e.preventDefault(); press(k); }
+  });
+  const api = {
+    useGuess: () => {},
+    reset() { expr = ""; $("#notes-text").value = ""; render(); },
+  };
+  render();
+  return api;
+})();
 
 setupSound();
 start();
