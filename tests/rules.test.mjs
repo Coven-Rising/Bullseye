@@ -37,11 +37,16 @@ test("bullseye is 2% of the answer (5% Fermi), and small counts must be exact", 
 test("scoring is measured against the real answer, the same on any scale", () => {
   const q = { type: "fact", answer: 1000 };
   assert.deepEqual(scoreGuess(q, { min: 0, max: 2000 }, 1020), { points: 100, bullseye: true });
-  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1100).points, 81);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1100).points, 82);
   assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 900).points, 81);
-  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1250).points, 56);
-  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1500).points, 0);
-  assert.equal(scoreGuess({ type: "fact", answer: 8 }, { min: 0, max: 10 }, 9).points, 77);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1250).points, 72);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1500).points, 57);
+  // Too high and too low by the same factor score the same.
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 2000).points, 33);
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 500).points, 33);
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 3000).points, 0);
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 0).points, 0);
+  assert.equal(scoreGuess({ type: "fact", answer: 8 }, { min: 0, max: 10 }, 9).points, 80);
 });
 
 test("schedule: every day has 10 real questions and nothing is ever reused", () => {
@@ -78,7 +83,7 @@ test("year questions use a window of years", () => {
   assert.ok(sliderRange({ id: "moon", type: "year", answer: 2010 }).max <= 2025);
   assert.equal(sliderRange({ id: "rome", type: "year", answer: 1453 }).max - sliderRange({ id: "rome", type: "year", answer: 1453 }).min, 500);
   assert.deepEqual(scoreGuess(vg, r, 1853), { points: 100, bullseye: true });
-  assert.equal(scoreGuess(vg, r, 1863).points, 60);
+  assert.equal(scoreGuess(vg, r, 1863).points, 77);
   assert.equal(formatValue(vg, 1853), "1853");
   assert.equal(formatValue({ type: "fact" }, 1853), "1,853");
   // Different questions land at different spots in their window.
