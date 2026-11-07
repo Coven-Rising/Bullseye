@@ -28,7 +28,18 @@ async function start() {
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
   if (state.index >= state.questions.length) showSummary(); else showStart();
+  if (!seenRules()) showRules();
 }
+
+// How-to-play popup: opens by itself on a player's first visit, and from the ? button.
+const RULES_KEY = "bullseye-seen-rules";
+function seenRules() { try { return localStorage.getItem(RULES_KEY) === "1"; } catch { return false; } }
+function showRules() {
+  const d = $("#rules");
+  if (!d.open) d.showModal();
+  d.addEventListener("close", () => { try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+}
+$("#help").onclick = showRules;
 
 function showStart() {
   for (const id of ["#screen-question", "#screen-reveal", "#screen-summary"]) $(id).hidden = true;
@@ -89,14 +100,9 @@ function showQuestion() {
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
 
-  const dots = $("#q-progress");
-  dots.innerHTML = "";
-  dots.setAttribute("aria-label", `Question ${state.index + 1} of ${state.questions.length}`);
-  state.questions.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = i < state.index ? "dot done" : i === state.index ? "dot now" : "dot";
-    dots.appendChild(d);
-  });
+  const count = $("#q-progress");
+  count.innerHTML = `${state.index + 1}<small>/${state.questions.length}</small>`;
+  count.setAttribute("aria-label", `Question ${state.index + 1} of ${state.questions.length}`);
   $("#q-category").textContent = q.category;
   $("#q-fermi").hidden = q.type !== "fermi";
   $("#q-prompt").textContent = q.prompt;

@@ -52,10 +52,8 @@ main { padding-block: 0 40px; }
 
 /* Question screen */
 .meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.dots { display: flex; gap: 5px; }
-.dot { width: 20px; height: 8px; border-radius: 4px; background: var(--stage-2); }
-.dot.done { background: var(--gold); }
-.dot.now { background: var(--white); }
+.q-count { font: 400 20px/1 var(--display); color: var(--white); }
+.q-count small { font-size: 15px; color: var(--lilac); }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .tag {
   background: var(--gold); color: var(--night); border-radius: 999px; padding: 3px 10px;
@@ -338,3 +336,17 @@ main { padding-block: 0 40px; }
 .sound-btn[aria-pressed="false"] .waves { display: none; }
 .sound-btn[aria-pressed="false"] .mute { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bull-fx { display: none !important; } }
+
+/* How-to-play popup */
+.help-btn { padding: 0; font: 400 18px/1 var(--display); display: grid; place-items: center; }
+.rules {
+  width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+  margin: auto; padding: 22px 20px 20px; border: 4px dotted var(--gold); border-radius: 26px;
+  background: var(--stage); color: var(--white);
+}
+.rules::backdrop { background: rgb(26 8 56 / 0.82); }
+.rules-title { margin: 0 0 16px; text-align: center; font: 400 26px/1.1 var(--display); color: var(--gold); text-transform: uppercase; }
+.rules-list .how-n { font-size: 14px; }
+.rules-list i { font-style: normal; font-weight: 700; color: var(--white); text-decoration: underline; text-decoration-color: var(--gold); }
+.rules form { margin: 20px 0 0; display: flex; }
+.rules form .primary { flex: 1; }
