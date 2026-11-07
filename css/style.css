@@ -175,9 +175,7 @@ main { padding-block: 0 40px; }
 .source-site { margin-top: 6px !important; color: #6b5a96; font-size: 13px; }
 
 /* Start screen */
-.start .bubble { margin-top: 4px; }
-.start .prompt { font: 400 28px/1.2 var(--display); text-align: center; padding: 18px 4px; }
-.start-streak { margin: 18px 0 0; text-align: center; font-weight: 800; color: var(--gold); }
+.start-streak { margin: 4px 0 12px; text-align: center; font-weight: 800; color: var(--gold); }
 
 /* Summary */
 .summary-title { margin: 0; text-align: center; font: 400 22px/1.2 var(--display); color: var(--gold); text-wrap: balance; }
@@ -239,7 +237,6 @@ main { padding-block: 0 40px; }
 }
 @keyframes bar-in { from { transform: scaleY(0); } to { transform: none; } }
 .chart-axis { display: flex; justify-content: space-between; margin-top: 6px; color: var(--lilac); font-size: 13px; font-weight: 700; }
-.come-back { text-align: center; color: var(--lilac); font-size: 14px; margin: 18px 0 0; }
 
 @media (max-width: 400px) {
   .logo { font-size: 22px; }

@@ -27,19 +27,25 @@ async function start() {
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
-  if (state.index >= state.questions.length) showSummary(); else showStart();
-  if (!seenRules()) showRules();
+  // The game loads behind the how-to-play popup; Play just closes it.
+  if (state.index >= state.questions.length) showSummary();
+  else { showQuestion(); showRules(); }
 }
 
 // How-to-play popup: opens by itself on a player's first visit, and from the ? button.
-const RULES_KEY = "bullseye-seen-rules";
-function seenRules() { try { return localStorage.getItem(RULES_KEY) === "1"; } catch { return false; } }
 function showRules() {
   const d = $("#rules");
+  const playing = !$("#screen-question").hidden || !$("#screen-reveal").hidden;
+  const streak = currentStreak(loadStats(), state.day);
+  const line = $("#rules-streak");
+  line.hidden = !playing || streak < 1;
+  line.textContent = `🔥 ${streak}-day streak. Keep it going!`;
+  $("#play").textContent = !playing ? "Got it" : state.index > 0 ? `Continue #${state.day}` : `Play #${state.day}`;
+  $("#play").onclick = () => { if (soundOn) ctx(); };
   if (!d.open) d.showModal();
   d.scrollTop = 0;
   const stop = playDemo();
-  d.addEventListener("close", () => { stop(); try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+  d.addEventListener("close", () => { stop(); window.scrollTo(0, 0); }, { once: true });
 }
 
 // The mini slider in step 2 glides between guesses, like a player lining one up.
@@ -64,18 +70,6 @@ function playDemo() {
   return () => cancelAnimationFrame(raf);
 }
 $("#help").onclick = showRules;
-
-function showStart() {
-  for (const id of ["#screen-question", "#screen-reveal", "#screen-summary"]) $(id).hidden = true;
-  $("#screen-start").hidden = false;
-  const st = loadStats();
-  const streak = currentStreak(st, state.day);
-  const line = $("#start-streak");
-  line.hidden = streak < 1;
-  line.textContent = `🔥 ${streak}-day streak. Keep it going!`;
-  $("#play").textContent = state.index > 0 ? `Continue #${state.day}` : `Play #${state.day}`;
-  $("#play").onclick = () => { if (soundOn) ctx(); showQuestion(); window.scrollTo(0, 0); };
-}
 
 // Personal stats, kept on this device only.
 const STATS_KEY = "bullseye-stats";
@@ -119,7 +113,6 @@ function showQuestion() {
   const span = max - min;
   const show = (n) => formatValue(q, n);
   const clamp = (v) => Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
-  $("#screen-start").hidden = true;
   $("#screen-question").hidden = false;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
@@ -556,7 +549,6 @@ function shareText() {
 }
 
 function showSummary() {
-  $("#screen-start").hidden = true;
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = false;
