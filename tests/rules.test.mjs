@@ -24,17 +24,24 @@ test("the answer never sits at the very end of the bar", () => {
   assert.ok(sliderMax({ id: "y", answer: 100 }) > 100);
 });
 
-test("small scales need an exact answer", () => {
-  assert.equal(bullseyeTolerance({ type: "fact" }, 100), 0);
-  assert.equal(bullseyeTolerance({ type: "fact" }, 1000000), 5000);
-  assert.equal(bullseyeTolerance({ type: "fermi" }, 250000), 5000);
+test("bullseye is 2% of the answer (5% Fermi), and small counts must be exact", () => {
+  const r = { min: 0, max: 50000 };
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 40990 }, r), 819);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 8 }, r), 0);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 49 }, r), 0);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 236 }, r), 4);
+  assert.equal(bullseyeTolerance({ type: "fermi", answer: 25463 }, r), 1273);
+  assert.equal(bullseyeTolerance({ type: "year", answer: 1853 }, { min: 1800, max: 1900 }), 0);
 });
 
-test("scoring", () => {
-  const q = { type: "fact", answer: 26 };
-  assert.deepEqual(scoreGuess(q, { min: 0, max: 100 }, 26), { points: 100, bullseye: true });
-  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 31).points, 75);
-  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 90).points, 0);
+test("scoring is measured against the real answer, the same on any scale", () => {
+  const q = { type: "fact", answer: 1000 };
+  assert.deepEqual(scoreGuess(q, { min: 0, max: 2000 }, 1020), { points: 100, bullseye: true });
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1100).points, 81);
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 900).points, 81);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1250).points, 56);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1500).points, 0);
+  assert.equal(scoreGuess({ type: "fact", answer: 8 }, { min: 0, max: 10 }, 9).points, 77);
 });
 
 test("schedule: every day has 10 real questions and nothing is ever reused", () => {

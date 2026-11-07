@@ -1,5 +1,5 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, shareSquare, formatValue, parseGuess } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess } from "./rules.js";
 
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -169,7 +169,7 @@ function showReveal(q, range, guess, points, bullseye) {
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = false;
   const unit = q.unit ? ` ${q.unit}` : "";
-  const tol = bullseyeTolerance(q, span);
+  const tol = bullseyeTolerance(q, range);
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
@@ -186,9 +186,13 @@ function showReveal(q, range, guess, points, bullseye) {
   setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
   $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${q.type === "year" ? `${Math.round(tol)} years` : fmt(tol)}`;
   // Off by, as a share of the slider's scale (the same measure the score uses).
-  const offPct = (Math.abs(guess - q.answer) / span) * 100;
+  // Off by: a share of the real answer, or for years the number of years.
+  const isYear = q.type === "year";
+  const offPct = isYear ? Math.abs(guess - q.answer) : offBy(q, range, guess) * 100;
   $("#r-accuracy").hidden = bullseye;
-  const offText = (n) => `${n > 0 && n < 0.1 ? "0.1" : n.toFixed(1)}%`;
+  const offText = isYear
+    ? (n) => `${Math.round(n)} yr${Math.round(n) === 1 ? "" : "s"}`
+    : (n) => `${n > 0 && n < 0.1 ? "0.1" : n >= 100 ? Math.round(n) : n.toFixed(1)}%`;
   for (const el of [$("#r-points"), $("#r-accuracy-value")]) { clearTimeout(el._t); cancelAnimationFrame(el._raf); }
   $("#r-points").textContent = "0";
   $("#r-accuracy-value").textContent = offText(0);
