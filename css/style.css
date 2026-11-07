@@ -70,7 +70,7 @@ main { padding-block: 0 40px; }
 
 .readout { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
 #guess-box {
-  width: 100%; max-width: 230px; text-align: center;
+  flex: 1; min-width: 0; max-width: 340px; text-align: center;
   font: 400 38px/1.1 var(--display); color: var(--gold);
   background: var(--night); border: 3px solid var(--gold); border-radius: 14px; padding: 8px 6px;
   -moz-appearance: textfield; appearance: textfield;

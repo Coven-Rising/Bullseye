@@ -1,5 +1,5 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, shareSquare, formatValue } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, shareSquare, formatValue, parseGuess } from "./rules.js";
 
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -115,31 +115,38 @@ function showQuestion() {
   slider.max = max;
   slider.step = span <= 2000 ? 1 : span / 2000;
   slider.value = min;
-  box.min = min;
-  box.max = max;
-  box.value = min;
+  // The box shows the full number with commas, and shrinks its text to fit big ones.
+  const full = (v) => formatValue(q, v, { full: true });
+  const setBox = (v) => { box.value = full(v); fitBox(box, full(max).length); };
+  setBox(min);
   updateFill();
 
   let lastVal = min;
   slider.oninput = () => {
     const v = Math.round(Number(slider.value));
-    box.value = v; updateFill();
+    setBox(v); updateFill();
     // Tick on every change, however small. Fast drags are paced to a steady
     // rattle by the throttle in click(); pitch rises as the handle goes up.
     if (v !== lastVal) { lastVal = v; sliderTick((v - min) / span); }
   };
   box.oninput = () => {
-    slider.value = clamp(box.value); updateFill();
+    const v = parseGuess(box.value);
+    if (box.value !== "") box.value = v > max ? full(max) : full(v);
+    slider.value = clamp(v); updateFill();
   };
-  box.onblur = () => { box.value = clamp(box.value); };
+  box.onblur = () => setBox(clamp(parseGuess(box.value)));
+  // + and − move by 1 on small scales, and by a round step on big ones.
+  const step = span <= 2000 ? 1 : 10 ** Math.floor(Math.log10(span / 200));
+  $("#minus").setAttribute("aria-label", `Decrease by ${step.toLocaleString("en-US")}`);
+  $("#plus").setAttribute("aria-label", `Increase by ${step.toLocaleString("en-US")}`);
   const nudge = (d) => {
-    const v = clamp(Number(box.value) + d);
-    box.value = v; slider.value = v; updateFill();
+    const v = clamp(parseGuess(box.value) + d);
+    setBox(v); slider.value = v; updateFill();
     sliderTick((v - min) / span);
   };
-  $("#minus").onclick = () => nudge(-1);
-  $("#plus").onclick = () => nudge(1);
-  $("#lock").onclick = () => lock(q, range, clamp(box.value));
+  $("#minus").onclick = () => nudge(-step);
+  $("#plus").onclick = () => nudge(step);
+  $("#lock").onclick = () => lock(q, range, clamp(parseGuess(box.value)));
 }
 
 function updateFill() {
@@ -177,7 +184,7 @@ function showReveal(q, range, guess, points, bullseye) {
   // The range of guesses that would have scored a bullseye.
   const lo = Math.max(min, q.answer - tol), hi = Math.min(max, q.answer + tol);
   setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
-  $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${Math.round(tol).toLocaleString("en-US")}${q.type === "year" ? " years" : ""}`;
+  $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${q.type === "year" ? `${Math.round(tol)} years` : fmt(tol)}`;
   // Off by, as a share of the slider's scale (the same measure the score uses).
   const offPct = (Math.abs(guess - q.answer) / span) * 100;
   $("#r-accuracy").hidden = bullseye;
@@ -239,6 +246,14 @@ function showReveal(q, range, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+// Size the guess box text so the longest number on this scale fits.
+function fitBox(box, chars) {
+  box.style.fontSize = "";
+  const base = parseFloat(getComputedStyle(box).fontSize);
+  const room = box.clientWidth - 16;
+  box.style.fontSize = `${Math.min(base, Math.floor(room / (chars * 0.78)))}px`;
 }
 
 // Shrink a value's font until it fits on one line in its tile (e.g. 500,000,000,000).

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
+import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
 const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
@@ -91,4 +91,18 @@ test("every question has an id, answer and source", () => {
     assert.ok(Number.isInteger(q.answer) && q.answer > 0, q.id);
     assert.match(q.source, /^https:\/\//);
   }
+});
+
+test("big numbers shorten to 3 significant figures, the guess box keeps every digit", () => {
+  const f = { type: "fact" };
+  assert.equal(formatValue(f, 999999), "999,999");
+  assert.equal(formatValue(f, 3333360), "3.33M");
+  assert.equal(formatValue(f, 150000000), "150M");
+  assert.equal(formatValue(f, 3000000000), "3B");
+  assert.equal(formatValue(f, 500000000000), "500B");
+  assert.equal(formatValue(f, 2950000000), "2.95B");
+  assert.equal(formatValue(f, 3000000000, { full: true }), "3,000,000,000");
+  assert.equal(formatValue({ type: "year" }, 1853, { full: true }), "1853");
+  assert.equal(parseGuess("3,000,000"), 3000000);
+  assert.equal(parseGuess(""), 0);
 });

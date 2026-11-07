@@ -135,8 +135,23 @@ export function scoreGuess(q, range, guess) {
 }
 
 // Years print without a thousands separator (1853, not 1,853).
-export function formatValue(q, n) {
-  return q.type === "year" ? String(Math.round(n)) : Math.round(n).toLocaleString("en-US");
+// Years show as-is. Counts get commas, and from a million up they are shortened
+// to 3 significant figures (3,333,360 -> "3.33M", 500,000,000,000 -> "500B").
+// { full: true } keeps every digit, for the guess box.
+const COMPACT = [[1e12, "T"], [1e9, "B"], [1e6, "M"]];
+export function formatValue(q, n, { full = false } = {}) {
+  const v = Math.round(n);
+  if (q.type === "year") return String(v);
+  if (!full) for (const [size, suffix] of COMPACT) {
+    if (Math.abs(v) >= size) return `${Number((v / size).toPrecision(3))}${suffix}`;
+  }
+  return v.toLocaleString("en-US");
+}
+
+// Read a typed guess like "3,000,000" back into a number.
+export function parseGuess(text) {
+  const digits = String(text).replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : 0;
 }
 
 export function shareSquare(r) {
