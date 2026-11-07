@@ -505,3 +505,14 @@ main { padding-block: 0 40px; }
   .s-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
   .s-side .s-list-title { margin-top: 16px; }
 }
+
+/* Tip jar link under the countdown. */
+.coffee {
+  display: flex; align-items: center; gap: 12px; width: fit-content; margin: 20px auto 0;
+  padding: 10px 20px 10px 14px; border-radius: 999px; text-decoration: none;
+  background: rgba(255, 255, 255, .07); border: 2px solid rgba(255, 201, 60, .45); color: #fff;
+  font: 400 15px/1.15 var(--display); transition: transform .15s, border-color .15s, background .15s;
+}
+.coffee small { display: block; font: 700 12px/1.3 var(--body); color: var(--lilac); letter-spacing: .02em; }
+.coffee-cup { font-size: 26px; line-height: 1; }
+.coffee:hover, .coffee:focus-visible { transform: translateY(-2px); border-color: var(--gold); background: rgba(255, 201, 60, .12); }
