@@ -1,7 +1,6 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { pickDaily, puzzleNumber, sliderMax, bullseyeTolerance, scoreGuess, shareSquare } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, shareSquare, formatValue } from "./rules.js";
 
-const QUESTIONS_PER_DAY = 10;
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
@@ -16,11 +15,15 @@ function load() {
 }
 
 async function start() {
-  const pool = await (await fetch("data/questions.json")).json();
+  const [pool, schedule] = await Promise.all([
+    fetch("data/questions.json").then((r) => r.json()),
+    fetch("data/schedule.json").then((r) => r.json()),
+  ]);
+  state.schedule = schedule;
   const params = new URLSearchParams(location.search);
   state.day = params.has("day") ? Number(params.get("day")) : puzzleNumber(new Date());
   state.pool = pool;
-  state.questions = pickDaily(pool, state.day, QUESTIONS_PER_DAY);
+  state.questions = dailyQuestions(pool, schedule, state.day);
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
@@ -76,7 +79,12 @@ function startCountdown() {
 
 function showQuestion() {
   const q = state.questions[state.index];
-  const max = sliderMax(q);
+  const range = sliderRange(q);
+  const { min, max } = range;
+  const span = max - min;
+  const show = (n) => formatValue(q, n);
+  const clamp = (v) => Math.min(max, Math.max(min, Math.round(Number(v) || 0)));
+  $("#screen-start").hidden = true;
   $("#screen-question").hidden = false;
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
@@ -92,71 +100,74 @@ function showQuestion() {
   $("#q-category").textContent = q.category;
   $("#q-fermi").hidden = q.type !== "fermi";
   $("#q-prompt").textContent = q.prompt;
-  $("#q-max").textContent = fmt(max) + (q.unit ? ` ${q.unit}` : "");
+  $("#q-min").textContent = show(min);
+  $("#q-max").textContent = show(max) + (q.unit ? ` ${q.unit}` : "");
 
   const slider = $("#slider");
   const box = $("#guess-box");
+  slider.min = min;
   slider.max = max;
-  slider.step = max <= 2000 ? 1 : max / 2000;
-  slider.value = 0;
+  slider.step = span <= 2000 ? 1 : span / 2000;
+  slider.value = min;
+  box.min = min;
   box.max = max;
-  box.value = 0;
+  box.value = min;
   updateFill();
 
-  let lastVal = 0;
+  let lastVal = min;
   slider.oninput = () => {
     const v = Math.round(Number(slider.value));
     box.value = v; updateFill();
     // Tick on every change, however small. Fast drags are paced to a steady
     // rattle by the throttle in click(); pitch rises as the handle goes up.
-    if (v !== lastVal) { lastVal = v; sliderTick(v / max); }
+    if (v !== lastVal) { lastVal = v; sliderTick((v - min) / span); }
   };
   box.oninput = () => {
-    const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0)));
-    slider.value = v; updateFill();
+    slider.value = clamp(box.value); updateFill();
   };
-  box.onblur = () => { box.value = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0))); };
-  $("#minus").onclick = () => nudge(-1, max);
-  $("#plus").onclick = () => nudge(1, max);
-  $("#lock").onclick = () => lock(q, max, Math.min(max, Math.max(0, Math.round(Number(box.value) || 0))));
-}
-
-function nudge(d, max) {
-  const box = $("#guess-box");
-  const v = Math.min(max, Math.max(0, Math.round(Number(box.value) || 0) + d));
-  box.value = v; $("#slider").value = v; updateFill();
-  sliderTick(v / max);
+  box.onblur = () => { box.value = clamp(box.value); };
+  const nudge = (d) => {
+    const v = clamp(Number(box.value) + d);
+    box.value = v; slider.value = v; updateFill();
+    sliderTick((v - min) / span);
+  };
+  $("#minus").onclick = () => nudge(-1);
+  $("#plus").onclick = () => nudge(1);
+  $("#lock").onclick = () => lock(q, range, clamp(box.value));
 }
 
 function updateFill() {
   const s = $("#slider");
-  const pct = (Number(s.value) / Number(s.max)) * 100;
+  const pct = ((Number(s.value) - Number(s.min)) / (Number(s.max) - Number(s.min))) * 100;
   s.style.setProperty("--fill", `${pct}%`);
 }
 
-function lock(q, max, guess) {
-  const { points, bullseye } = scoreGuess(q, max, guess);
+function lock(q, range, guess) {
+  const { points, bullseye } = scoreGuess(q, range, guess);
   state.results.push({ id: q.id, guess, points, bullseye });
   save();
-  showReveal(q, max, guess, points, bullseye);
+  showReveal(q, range, guess, points, bullseye);
 }
 
-function showReveal(q, max, guess, points, bullseye) {
+function showReveal(q, range, guess, points, bullseye) {
+  const { min, max } = range;
+  const span = max - min;
+  const fmt = (n) => formatValue(q, n);
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = false;
   const unit = q.unit ? ` ${q.unit}` : "";
-  const tol = bullseyeTolerance(q, max);
+  const tol = bullseyeTolerance(q, span);
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
   setValue($("#r-answer"), fmt(q.answer), q.unit);
   setValue($("#r-guess"), fmt(guess), q.unit);
   // The range of guesses that would have scored a bullseye.
-  const lo = Math.max(0, q.answer - tol), hi = Math.min(max, q.answer + tol);
+  const lo = Math.max(min, q.answer - tol), hi = Math.min(max, q.answer + tol);
   setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
-  $("#r-range-note").textContent = tol === 0 ? "Exact answer only" : `Within ±${fmt(tol)}`;
+  $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${Math.round(tol).toLocaleString("en-US")}${q.type === "year" ? " years" : ""}`;
   // Off by, as a share of the slider's scale (the same measure the score uses).
-  const offPct = (Math.abs(guess - q.answer) / max) * 100;
+  const offPct = (Math.abs(guess - q.answer) / span) * 100;
   $("#r-accuracy").hidden = bullseye;
   const offText = (n) => `${n > 0 && n < 0.1 ? "0.1" : n.toFixed(1)}%`;
   for (const el of [$("#r-points"), $("#r-accuracy-value")]) { clearTimeout(el._t); cancelAnimationFrame(el._raf); }
@@ -180,10 +191,11 @@ function showReveal(q, max, guess, points, bullseye) {
   };
 
   // Track: answer marker, guess marker, and the bullseye window.
-  const pos = (v) => `${(v / max) * 100}%`;
+  const frac = (v) => (v - min) / span;
+  const pos = (v) => `${frac(v) * 100}%`;
   for (const [sel, v] of [["#t-answer", q.answer], ["#t-guess", guess]]) {
     const el = $(sel);
-    el.dataset.edge = v / max > 0.88 ? "end" : v / max < 0.12 ? "start" : "";
+    el.dataset.edge = frac(v) > 0.88 ? "end" : frac(v) < 0.12 ? "start" : "";
     el.classList.remove("anim");
     el.style.left = reducedMotion() ? pos(v) : "0%";
   }
@@ -201,8 +213,9 @@ function showReveal(q, max, guess, points, bullseye) {
     });
   };
   playThrow(throwTier(points, bullseye), runStats);
-  $("#t-window").style.left = pos(Math.max(0, q.answer - tol));
-  $("#t-window").style.width = `max(2px, ${(Math.min(max, q.answer + tol) - Math.max(0, q.answer - tol)) / max * 100}%)`;
+  $("#t-window").style.left = pos(lo);
+  $("#t-window").style.width = `max(2px, ${(hi - lo) / span * 100}%)`;
+  $("#t-min").textContent = fmt(min);
   $("#t-max").textContent = fmt(max);
 
   const last = state.index === state.questions.length - 1;
@@ -496,15 +509,21 @@ function showSummary() {
     const li = document.createElement("li");
     li.innerHTML = `<span class="s-sq"></span><span class="s-q"></span><span class="s-pts"></span>`;
     li.querySelector(".s-sq").textContent = shareSquare(r);
-    li.querySelector(".s-q").textContent = `${q.prompt} ${fmt(q.answer)}${q.unit ? " " + q.unit : ""} (you: ${fmt(r.guess)})`;
+    li.querySelector(".s-q").textContent = `${q.prompt} ${formatValue(q, q.answer)}${q.unit ? " " + q.unit : ""} (you: ${formatValue(q, r.guess)})`;
     li.querySelector(".s-pts").textContent = r.points;
     list.appendChild(li);
   });
-  // Prototype only: jump to the next set of questions to keep playing.
+  // Practice replays an earlier day. The preview build (window.BULLSEYE_PREVIEW)
+  // can also step forward into upcoming days for testing.
+  const today = puzzleNumber(new Date());
+  const next = window.BULLSEYE_PREVIEW ? state.day + 1 : (state.practice ? state.day - 1 : today - 1);
+  const canPractice = next >= 1 && next <= state.schedule.days.length;
+  $("#practice").hidden = !canPractice;
+  $("#practice").textContent = window.BULLSEYE_PREVIEW ? `Play #${next} (preview)` : `Play #${next} (practice)`;
   $("#practice").onclick = () => {
-    state.day++;
+    state.day = next;
     state.practice = true;
-    state.questions = pickDaily(state.pool, state.day, QUESTIONS_PER_DAY);
+    state.questions = dailyQuestions(state.pool, state.schedule, state.day);
     state.results = [];
     state.index = 0;
     $("#puzzle-no").textContent = `#${state.day} (practice)`;
