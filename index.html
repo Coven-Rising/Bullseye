@@ -73,6 +73,24 @@
 
     <section id="screen-reveal" class="card" hidden>
       <p id="r-prompt" class="r-prompt"></p>
+      <div class="answer-row">
+        <div class="tile tile-you">
+          <span class="label">Your answer</span>
+          <span id="r-guess" class="tile-value"></span>
+        </div>
+        <div id="r-answer-tile" class="tile tile-answer">
+          <span class="label">Correct answer</span>
+          <span id="r-answer" class="tile-value"></span>
+        </div>
+      </div>
+
+      <div class="track" aria-hidden="true">
+        <div id="t-window" class="t-window"></div>
+        <div id="t-answer" class="t-mark t-answer"><span>Answer</span></div>
+        <div id="t-guess" class="t-mark t-guess"><span>You</span></div>
+      </div>
+      <div class="scale"><span id="t-min">0</span><span id="t-max"></span></div>
+
       <div class="points-row">
         <div class="tile tile-score">
           <span class="label">Score</span>
@@ -88,18 +106,11 @@
         </div>
       </div>
 
-      <div class="track" aria-hidden="true">
-        <div id="t-window" class="t-window"></div>
-        <div id="t-answer" class="t-mark t-answer"><span>Answer</span></div>
-        <div id="t-guess" class="t-mark t-guess"><span>You</span></div>
+      <div class="bull-range">
+        <span class="label">Bullseye range</span>
+        <span id="r-range"></span>
+        <span id="r-range-note" class="range-note"></span>
       </div>
-      <div class="scale"><span id="t-min">0</span><span id="t-max"></span></div>
-
-      <dl class="facts">
-        <div><dt>Your answer</dt><dd id="r-guess"></dd></div>
-        <div><dt>Correct answer</dt><dd id="r-answer"></dd></div>
-        <div class="bull-range"><dt>Bullseye range</dt><dd id="r-range"></dd><dd id="r-range-note" class="range-note"></dd></div>
-      </dl>
       <p id="r-working" class="working" hidden></p>
 
       <button id="r-source-toggle" class="source-toggle" aria-expanded="false" aria-controls="r-source">Source</button>

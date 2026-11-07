@@ -167,7 +167,13 @@ function showReveal(q, range, guess, points, bullseye) {
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
   setValue($("#r-answer"), fmt(q.answer), q.unit);
+  // The correct answer stays hidden until the dart lands, then pops in with its marker.
+  const answerTile = $("#r-answer-tile");
+  answerTile.classList.remove("show");
+  answerTile.classList.toggle("waiting", !reducedMotion());
   setValue($("#r-guess"), fmt(guess), q.unit);
+  fitText($("#r-answer"));
+  fitText($("#r-guess"));
   // The range of guesses that would have scored a bullseye.
   const lo = Math.max(min, q.answer - tol), hi = Math.min(max, q.answer + tol);
   setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
@@ -209,7 +215,9 @@ function showReveal(q, range, guess, points, bullseye) {
   const runStats = () => {
     countUp($("#r-points"), points, (n) => String(Math.round(n)), 150);
     countUp($("#r-accuracy-value"), offPct, offText, 150);
+    answerTile.classList.remove("waiting");
     if (reducedMotion()) return;
+    answerTile.classList.add("show");
     void $("#t-guess").offsetWidth;
     requestAnimationFrame(() => {
       $("#t-guess").classList.add("anim");
@@ -231,6 +239,13 @@ function showReveal(q, range, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+// Shrink a value's font until it fits on one line in its tile (e.g. 500,000,000,000).
+function fitText(el) {
+  el.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > 12) el.style.fontSize = `${--size}px`;
 }
 
 // A number with its unit in smaller type, e.g. "299,792 km/s".
