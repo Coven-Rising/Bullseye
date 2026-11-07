@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, crowdStanding, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
+import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, crowdStanding, calculate, formatCalc, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
 const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
@@ -120,4 +120,21 @@ test("crowd standing: your score against the community average", () => {
   assert.equal(crowdStanding({ players: 50, average: 620, bins }, 580).diff, -40);
   assert.equal(crowdStanding({ players: 1, average: 640, bins }, 640), null);
   assert.equal(crowdStanding(null, 640), null);
+});
+
+test("scratchpad calculator", () => {
+  assert.equal(calculate("2+3×4"), 14);
+  assert.equal(calculate("(2+3)×4"), 20);
+  assert.equal(calculate("2,200,000,000÷86,400"), 2200000000 / 86400);
+  assert.equal(calculate("-5+2"), -3);
+  assert.equal(calculate("0.1+0.2"), 0.1 + 0.2);
+  assert.equal(calculate("8849÷330"), 8849 / 330);
+  assert.equal(calculate("1÷0"), null);
+  assert.equal(calculate("2+"), null);
+  assert.equal(calculate("(2+3"), null);
+  assert.equal(calculate(""), null);
+  assert.equal(calculate("alert(1)"), null);
+  assert.equal(formatCalc(0.1 + 0.2), "0.3");
+  assert.equal(formatCalc(2200000000 / 86400), "25,462.962963");
+  assert.equal(formatCalc(null), "");
 });

@@ -440,3 +440,64 @@ main { padding-block: 0 40px; }
 }
 .rules form { margin: 14px 0 0; display: flex; }
 .rules form .primary { flex: 1; margin-top: 0; padding: 14px; }
+
+/* Scratchpad: calculator + notes. Beside the card on wide screens, inline in
+   the question header on phones, where the panel opens as a bottom sheet. */
+#screen-question { position: relative; }
+.tools { display: flex; gap: 8px; margin-left: auto; margin-right: 10px; }
+.tool-btn {
+  width: 44px; height: 44px; padding: 8px; border-radius: 14px; cursor: pointer;
+  border: 3px solid var(--night); background: var(--white); color: var(--night);
+  box-shadow: 0 4px 0 var(--night);
+}
+.tool-btn svg { width: 100%; height: 100%; display: block; }
+.tool-btn[aria-expanded="true"] { background: var(--gold); }
+.tool-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--night); }
+.tool-panel {
+  position: fixed; z-index: 20; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: min(520px, 100vw); padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--stage); border: 4px solid var(--night); border-bottom: none; border-radius: 22px 22px 0 0;
+  box-shadow: 0 -10px 40px rgb(0 0 0 / 0.5);
+}
+.tool-tabs { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+.tool-tab {
+  flex: 1; padding: 8px 6px; border-radius: 12px; cursor: pointer; border: 3px solid var(--night);
+  background: var(--night); color: var(--lilac); font: 400 13px/1 var(--display); text-transform: uppercase;
+}
+.tool-tab[aria-selected="true"] { background: var(--gold); color: var(--night); }
+.tool-close {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid var(--night);
+  background: var(--white); color: var(--night); font: 400 20px/1 var(--display);
+}
+.calc-screen { background: var(--night); border-radius: 14px; padding: 8px 12px; text-align: right; min-height: 64px; }
+.calc-expr { min-height: 18px; color: var(--lilac); font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.calc-out { font: 400 28px/1.15 var(--display); color: var(--gold); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.calc-keys button {
+  height: 42px; border-radius: 12px; cursor: pointer; border: 3px solid var(--night);
+  background: var(--white); color: var(--night); font: 400 18px/1 var(--display); box-shadow: 0 3px 0 var(--night);
+}
+.calc-keys button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--night); }
+.calc-keys .k-fn { background: var(--lilac); }
+.calc-keys .k-op { background: var(--stage-2); color: var(--white); }
+.calc-keys .k-eq { background: var(--gold); }
+.calc-use {
+  width: 100%; margin-top: 10px; padding: 10px; border-radius: 12px; cursor: pointer;
+  border: 3px solid var(--night); background: var(--mint); color: var(--night); font: 400 14px/1 var(--display); text-transform: uppercase;
+}
+.calc-use:disabled { opacity: 0.45; cursor: default; }
+.notes-text {
+  width: 100%; height: 262px; resize: none; padding: 12px; border-radius: 14px; border: 3px solid var(--night);
+  background: #fffbea; color: var(--night); font: 500 16px/1.5 var(--body);
+  background-image: repeating-linear-gradient(transparent 0 23px, #e9dfb8 23px 24px); background-position: 0 11px;
+}
+@media (min-width: 1080px) {
+  .tools { position: absolute; top: 0; left: calc(100% + 18px); margin: 0; flex-direction: row; }
+  .tool-btn { width: 54px; height: 54px; padding: 10px; }
+  .tool-panel {
+    position: absolute; top: 68px; left: 0; bottom: auto; transform: none; width: 248px;
+    padding: 12px; border-bottom: 4px solid var(--night); border-radius: 20px; box-shadow: 0 6px 0 var(--night);
+  }
+  .calc-keys button { height: 40px; font-size: 16px; }
+  .notes-text { height: 280px; }
+}

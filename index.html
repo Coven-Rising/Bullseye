@@ -72,6 +72,38 @@
     <section id="screen-question" class="card" hidden>
       <div class="meta">
         <span id="q-progress" class="q-count"></span>
+        <div id="tools" class="tools">
+          <button id="tool-calc" class="tool-btn" aria-label="Calculator" aria-controls="tool-panel" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="3" fill="currentColor"/><rect x="7" y="5" width="10" height="4" rx="1" fill="#ffc93c"/><g fill="#fff"><circle cx="8.5" cy="12.5" r="1.3"/><circle cx="12" cy="12.5" r="1.3"/><circle cx="15.5" cy="12.5" r="1.3"/><circle cx="8.5" cy="16.5" r="1.3"/><circle cx="12" cy="16.5" r="1.3"/><circle cx="15.5" cy="16.5" r="1.3"/></g></svg>
+          </button>
+          <button id="tool-notes" class="tool-btn" aria-label="Notepad" aria-controls="tool-panel" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="15" height="19" rx="2.5" fill="currentColor"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M9 9h8M9 12.5h8M9 16h5"/></g><g fill="#ffc93c"><rect x="3" y="6" width="4" height="2" rx="1"/><rect x="3" y="11" width="4" height="2" rx="1"/><rect x="3" y="16" width="4" height="2" rx="1"/></g></svg>
+          </button>
+          <div id="tool-panel" class="tool-panel" role="dialog" aria-label="Scratchpad" hidden>
+            <div class="tool-tabs" role="tablist">
+              <button class="tool-tab" role="tab" data-tab="calc">Calculator</button>
+              <button class="tool-tab" role="tab" data-tab="notes">Notes</button>
+              <button id="tool-close" class="tool-close" aria-label="Close">×</button>
+            </div>
+            <div id="tab-calc" class="calc">
+              <div class="calc-screen" aria-live="polite">
+                <div id="calc-expr" class="calc-expr"></div>
+                <div id="calc-out" class="calc-out">0</div>
+              </div>
+              <div class="calc-keys">
+                <button data-k="C" class="k-fn">C</button><button data-k="(" class="k-fn">(</button><button data-k=")" class="k-fn">)</button><button data-k="÷" class="k-op">÷</button>
+                <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="×" class="k-op">×</button>
+                <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="−" class="k-op">−</button>
+                <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="+" class="k-op">+</button>
+                <button data-k="0">0</button><button data-k=".">.</button><button data-k="⌫" class="k-fn" aria-label="Delete">⌫</button><button data-k="=" class="k-eq">=</button>
+              </div>
+              <button id="calc-use" class="calc-use" disabled>Use as my guess</button>
+            </div>
+            <div id="tab-notes" class="notes" hidden>
+              <textarea id="notes-text" class="notes-text" placeholder="Jot down your working…" aria-label="Notes"></textarea>
+            </div>
+          </div>
+        </div>
         <span class="tags"><span id="q-fermi" class="tag fermi" hidden>Fermi estimate</span><span id="q-category" class="tag"></span></span>
       </div>
       <div class="bubble"><h2 id="q-prompt" class="prompt"></h2></div>
