@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
+import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, parseGuess, crowdStanding, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
 const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
@@ -24,17 +24,24 @@ test("the answer never sits at the very end of the bar", () => {
   assert.ok(sliderMax({ id: "y", answer: 100 }) > 100);
 });
 
-test("small scales need an exact answer", () => {
-  assert.equal(bullseyeTolerance({ type: "fact" }, 100), 0);
-  assert.equal(bullseyeTolerance({ type: "fact" }, 1000000), 5000);
-  assert.equal(bullseyeTolerance({ type: "fermi" }, 250000), 5000);
+test("bullseye is 2% of the answer (5% Fermi), and small counts must be exact", () => {
+  const r = { min: 0, max: 50000 };
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 40990 }, r), 819);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 8 }, r), 0);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 49 }, r), 0);
+  assert.equal(bullseyeTolerance({ type: "fact", answer: 236 }, r), 4);
+  assert.equal(bullseyeTolerance({ type: "fermi", answer: 25463 }, r), 1273);
+  assert.equal(bullseyeTolerance({ type: "year", answer: 1853 }, { min: 1800, max: 1900 }), 0);
 });
 
-test("scoring", () => {
-  const q = { type: "fact", answer: 26 };
-  assert.deepEqual(scoreGuess(q, { min: 0, max: 100 }, 26), { points: 100, bullseye: true });
-  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 31).points, 75);
-  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 90).points, 0);
+test("scoring is measured against the real answer, the same on any scale", () => {
+  const q = { type: "fact", answer: 1000 };
+  assert.deepEqual(scoreGuess(q, { min: 0, max: 2000 }, 1020), { points: 100, bullseye: true });
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1100).points, 81);
+  assert.equal(scoreGuess(q, { min: 0, max: 5000 }, 900).points, 81);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1250).points, 56);
+  assert.equal(scoreGuess(q, { min: 0, max: 2000 }, 1500).points, 0);
+  assert.equal(scoreGuess({ type: "fact", answer: 8 }, { min: 0, max: 10 }, 9).points, 77);
 });
 
 test("schedule: every day has 10 real questions and nothing is ever reused", () => {
@@ -91,4 +98,26 @@ test("every question has an id, answer and source", () => {
     assert.ok(Number.isInteger(q.answer) && q.answer > 0, q.id);
     assert.match(q.source, /^https:\/\//);
   }
+});
+
+test("big numbers shorten to 3 significant figures, the guess box keeps every digit", () => {
+  const f = { type: "fact" };
+  assert.equal(formatValue(f, 999999), "999,999");
+  assert.equal(formatValue(f, 3333360), "3.33M");
+  assert.equal(formatValue(f, 150000000), "150M");
+  assert.equal(formatValue(f, 3000000000), "3B");
+  assert.equal(formatValue(f, 500000000000), "500B");
+  assert.equal(formatValue(f, 2950000000), "2.95B");
+  assert.equal(formatValue(f, 3000000000, { full: true }), "3,000,000,000");
+  assert.equal(formatValue({ type: "year" }, 1853, { full: true }), "1853");
+  assert.equal(parseGuess("3,000,000"), 3000000);
+  assert.equal(parseGuess(""), 0);
+});
+
+test("crowd standing: your score against the community average", () => {
+  const bins = [1];
+  assert.deepEqual(crowdStanding({ players: 50, average: 620, bins }, 640), { average: 620, diff: 20, bins });
+  assert.equal(crowdStanding({ players: 50, average: 620, bins }, 580).diff, -40);
+  assert.equal(crowdStanding({ players: 1, average: 640, bins }, 640), null);
+  assert.equal(crowdStanding(null, 640), null);
 });

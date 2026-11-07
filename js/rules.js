@@ -1,8 +1,11 @@
 // Pure game rules, shared by the page and the tests.
 
 export const LAUNCH_DATE = "2026-11-07"; // puzzle #1
-export const BULLSEYE_PCT = { fact: 0.005, fermi: 0.02 };
-export const PARTIAL_CUTOFF = 0.3; // beyond 30% of the scale you score 0
+// Bullseye: within this share of the real answer (years: of the slider window).
+export const BULLSEYE_PCT = { fact: 0.02, fermi: 0.05, year: 0.005 };
+export const ZERO_AT = 0.5;      // 50% off the real answer scores 0
+export const YEAR_ZERO_AT = 0.3; // years: 30% of the window off scores 0
+export const CURVE = 1.4;        // >1 is kinder to near misses: 10% off scores ~81
 
 // Days since launch, by the player's local calendar date. #1 on launch day.
 export function puzzleNumber(date) {
@@ -122,21 +125,45 @@ export function sliderRange(q) {
 // Bullseye window: 0.5% of the scale (2% for Fermi estimates), rounded down.
 // On small scales that rounds to 0, so the answer must be exact. A 100-year
 // window needs the exact year.
-export function bullseyeTolerance(q, width) {
-  return Math.floor(width * (BULLSEYE_PCT[q.type] ?? BULLSEYE_PCT.fact));
+// How far off a guess is: a share of the real answer, or for years a share
+// of the slider window (being 10 years out is the same in 1066 or 1966).
+export function offBy(q, range, guess) {
+  const diff = Math.abs(guess - q.answer);
+  return q.type === "year" ? diff / (range.max - range.min) : diff / Math.abs(q.answer);
+}
+
+// Small counts (under 50) round down to 0, so they need the exact answer.
+export function bullseyeTolerance(q, range) {
+  const pct = BULLSEYE_PCT[q.type] ?? BULLSEYE_PCT.fact;
+  return Math.floor(pct * (q.type === "year" ? range.max - range.min : Math.abs(q.answer)));
 }
 
 export function scoreGuess(q, range, guess) {
-  const width = range.max - range.min;
-  const diff = Math.abs(guess - q.answer);
-  if (diff <= bullseyeTolerance(q, width)) return { points: 100, bullseye: true };
-  const err = diff / width;
-  return { points: Math.max(0, Math.round(90 * (1 - err / PARTIAL_CUTOFF))), bullseye: false };
+  if (Math.abs(guess - q.answer) <= bullseyeTolerance(q, range)) return { points: 100, bullseye: true };
+  const err = offBy(q, range, guess);
+  const t = q.type === "year" ? err / YEAR_ZERO_AT : err / ZERO_AT;
+  const left = q.type === "year" ? 1 - t : 1 - t ** CURVE;
+  return { points: Math.max(0, Math.round(90 * left)), bullseye: false };
 }
 
 // Years print without a thousands separator (1853, not 1,853).
-export function formatValue(q, n) {
-  return q.type === "year" ? String(Math.round(n)) : Math.round(n).toLocaleString("en-US");
+// Years show as-is. Counts get commas, and from a million up they are shortened
+// to 3 significant figures (3,333,360 -> "3.33M", 500,000,000,000 -> "500B").
+// { full: true } keeps every digit, for the guess box.
+const COMPACT = [[1e12, "T"], [1e9, "B"], [1e6, "M"]];
+export function formatValue(q, n, { full = false } = {}) {
+  const v = Math.round(n);
+  if (q.type === "year") return String(v);
+  if (!full) for (const [size, suffix] of COMPACT) {
+    if (Math.abs(v) >= size) return `${Number((v / size).toPrecision(3))}${suffix}`;
+  }
+  return v.toLocaleString("en-US");
+}
+
+// Read a typed guess like "3,000,000" back into a number.
+export function parseGuess(text) {
+  const digits = String(text).replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : 0;
 }
 
 export function shareSquare(r) {
@@ -144,4 +171,12 @@ export function shareSquare(r) {
   if (r.points >= 70) return "🟩";
   if (r.points >= 30) return "🟨";
   return "🟥";
+}
+
+// Crowd stats from /api/scores: the community's average score for the day.
+// Your own score is already counted, so with nobody else yet there's no
+// average worth showing. Player counts are never shown.
+export function crowdStanding(data, total) {
+  if (!data || !(data.players > 1) || data.average == null) return null;
+  return { average: data.average, diff: total - data.average, bins: data.bins };
 }

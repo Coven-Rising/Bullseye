@@ -1,5 +1,5 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, shareSquare, formatValue } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderRange, bullseyeTolerance, scoreGuess, offBy, shareSquare, formatValue, parseGuess, crowdStanding } from "./rules.js";
 
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -28,7 +28,18 @@ async function start() {
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
   if (state.index >= state.questions.length) showSummary(); else showStart();
+  if (!seenRules()) showRules();
 }
+
+// How-to-play popup: opens by itself on a player's first visit, and from the ? button.
+const RULES_KEY = "bullseye-seen-rules";
+function seenRules() { try { return localStorage.getItem(RULES_KEY) === "1"; } catch { return false; } }
+function showRules() {
+  const d = $("#rules");
+  if (!d.open) d.showModal();
+  d.addEventListener("close", () => { try { localStorage.setItem(RULES_KEY, "1"); } catch {} }, { once: true });
+}
+$("#help").onclick = showRules;
 
 function showStart() {
   for (const id of ["#screen-question", "#screen-reveal", "#screen-summary"]) $(id).hidden = true;
@@ -89,14 +100,9 @@ function showQuestion() {
   $("#screen-reveal").hidden = true;
   $("#screen-summary").hidden = true;
 
-  const dots = $("#q-progress");
-  dots.innerHTML = "";
-  dots.setAttribute("aria-label", `Question ${state.index + 1} of ${state.questions.length}`);
-  state.questions.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = i < state.index ? "dot done" : i === state.index ? "dot now" : "dot";
-    dots.appendChild(d);
-  });
+  const count = $("#q-progress");
+  count.innerHTML = `${state.index + 1}<small>/${state.questions.length}</small>`;
+  count.setAttribute("aria-label", `Question ${state.index + 1} of ${state.questions.length}`);
   $("#q-category").textContent = q.category;
   $("#q-fermi").hidden = q.type !== "fermi";
   $("#q-prompt").textContent = q.prompt;
@@ -109,31 +115,38 @@ function showQuestion() {
   slider.max = max;
   slider.step = span <= 2000 ? 1 : span / 2000;
   slider.value = min;
-  box.min = min;
-  box.max = max;
-  box.value = min;
+  // The box shows the full number with commas, and shrinks its text to fit big ones.
+  const full = (v) => formatValue(q, v, { full: true });
+  const setBox = (v) => { box.value = full(v); fitBox(box, full(max).length); };
+  setBox(min);
   updateFill();
 
   let lastVal = min;
   slider.oninput = () => {
     const v = Math.round(Number(slider.value));
-    box.value = v; updateFill();
+    setBox(v); updateFill();
     // Tick on every change, however small. Fast drags are paced to a steady
     // rattle by the throttle in click(); pitch rises as the handle goes up.
     if (v !== lastVal) { lastVal = v; sliderTick((v - min) / span); }
   };
   box.oninput = () => {
-    slider.value = clamp(box.value); updateFill();
+    const v = parseGuess(box.value);
+    if (box.value !== "") box.value = v > max ? full(max) : full(v);
+    slider.value = clamp(v); updateFill();
   };
-  box.onblur = () => { box.value = clamp(box.value); };
+  box.onblur = () => setBox(clamp(parseGuess(box.value)));
+  // + and − move by 1 on small scales, and by a round step on big ones.
+  const step = span <= 2000 ? 1 : 10 ** Math.floor(Math.log10(span / 200));
+  $("#minus").setAttribute("aria-label", `Decrease by ${step.toLocaleString("en-US")}`);
+  $("#plus").setAttribute("aria-label", `Increase by ${step.toLocaleString("en-US")}`);
   const nudge = (d) => {
-    const v = clamp(Number(box.value) + d);
-    box.value = v; slider.value = v; updateFill();
+    const v = clamp(parseGuess(box.value) + d);
+    setBox(v); slider.value = v; updateFill();
     sliderTick((v - min) / span);
   };
-  $("#minus").onclick = () => nudge(-1);
-  $("#plus").onclick = () => nudge(1);
-  $("#lock").onclick = () => lock(q, range, clamp(box.value));
+  $("#minus").onclick = () => nudge(-step);
+  $("#plus").onclick = () => nudge(step);
+  $("#lock").onclick = () => lock(q, range, clamp(parseGuess(box.value)));
 }
 
 function updateFill() {
@@ -156,20 +169,30 @@ function showReveal(q, range, guess, points, bullseye) {
   $("#screen-question").hidden = true;
   $("#screen-reveal").hidden = false;
   const unit = q.unit ? ` ${q.unit}` : "";
-  const tol = bullseyeTolerance(q, span);
+  const tol = bullseyeTolerance(q, range);
 
   $("#r-prompt").textContent = q.prompt;
   $("#r-badge").hidden = !bullseye;
   setValue($("#r-answer"), fmt(q.answer), q.unit);
+  // The correct answer stays hidden until the dart lands, then pops in with its marker.
+  const answerTile = $("#r-answer-tile");
+  answerTile.classList.remove("show");
+  answerTile.classList.toggle("waiting", !reducedMotion());
   setValue($("#r-guess"), fmt(guess), q.unit);
+  fitText($("#r-answer"));
+  fitText($("#r-guess"));
   // The range of guesses that would have scored a bullseye.
   const lo = Math.max(min, q.answer - tol), hi = Math.min(max, q.answer + tol);
   setValue($("#r-range"), tol === 0 ? fmt(q.answer) : `${fmt(lo)}–${fmt(hi)}`, q.unit);
-  $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${Math.round(tol).toLocaleString("en-US")}${q.type === "year" ? " years" : ""}`;
+  $("#r-range-note").textContent = tol === 0 ? (q.type === "year" ? "Exact year only" : "Exact answer only") : `Within ±${q.type === "year" ? `${Math.round(tol)} years` : fmt(tol)}`;
   // Off by, as a share of the slider's scale (the same measure the score uses).
-  const offPct = (Math.abs(guess - q.answer) / span) * 100;
+  // Off by: a share of the real answer, or for years the number of years.
+  const isYear = q.type === "year";
+  const offPct = isYear ? Math.abs(guess - q.answer) : offBy(q, range, guess) * 100;
   $("#r-accuracy").hidden = bullseye;
-  const offText = (n) => `${n > 0 && n < 0.1 ? "0.1" : n.toFixed(1)}%`;
+  const offText = isYear
+    ? (n) => `${Math.round(n)} yr${Math.round(n) === 1 ? "" : "s"}`
+    : (n) => `${n > 0 && n < 0.1 ? "0.1" : n >= 100 ? Math.round(n) : n.toFixed(1)}%`;
   for (const el of [$("#r-points"), $("#r-accuracy-value")]) { clearTimeout(el._t); cancelAnimationFrame(el._raf); }
   $("#r-points").textContent = "0";
   $("#r-accuracy-value").textContent = offText(0);
@@ -203,7 +226,9 @@ function showReveal(q, range, guess, points, bullseye) {
   const runStats = () => {
     countUp($("#r-points"), points, (n) => String(Math.round(n)), 150);
     countUp($("#r-accuracy-value"), offPct, offText, 150);
+    answerTile.classList.remove("waiting");
     if (reducedMotion()) return;
+    answerTile.classList.add("show");
     void $("#t-guess").offsetWidth;
     requestAnimationFrame(() => {
       $("#t-guess").classList.add("anim");
@@ -225,6 +250,21 @@ function showReveal(q, range, guess, points, bullseye) {
     if (state.index >= state.questions.length) showSummary(); else showQuestion();
   };
   $("#next").focus();
+}
+
+// Size the guess box text so the longest number on this scale fits.
+function fitBox(box, chars) {
+  box.style.fontSize = "";
+  const base = parseFloat(getComputedStyle(box).fontSize);
+  const room = box.clientWidth - 16;
+  box.style.fontSize = `${Math.min(base, Math.floor(room / (chars * 0.78)))}px`;
+}
+
+// Shrink a value's font until it fits on one line in its tile (e.g. 500,000,000,000).
+function fitText(el) {
+  el.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > 12) el.style.fontSize = `${--size}px`;
 }
 
 // A number with its unit in smaller type, e.g. "299,792 km/s".
@@ -506,13 +546,20 @@ function showSummary() {
   list.innerHTML = "";
   state.results.forEach((r, i) => {
     const q = state.questions[i];
+    const tier = r.bullseye ? "bull" : r.points >= 70 ? "good" : r.points >= 30 ? "ok" : "miss";
     const li = document.createElement("li");
-    li.innerHTML = `<span class="s-sq"></span><span class="s-q"></span><span class="s-pts"></span>`;
-    li.querySelector(".s-sq").textContent = shareSquare(r);
-    li.querySelector(".s-q").textContent = `${q.prompt} ${formatValue(q, q.answer)}${q.unit ? " " + q.unit : ""} (you: ${formatValue(q, r.guess)})`;
-    li.querySelector(".s-pts").textContent = r.points;
+    li.className = `ans ans-${tier}`;
+    li.innerHTML = `<span class="ans-n"></span><p class="ans-q"></p><span class="ans-pts"></span>
+      <p class="ans-v"><span class="ans-real"><small>Answer</small> <b></b></span><span class="ans-you"><small>You</small> <b></b></span></p>`;
+    li.querySelector(".ans-n").textContent = i + 1;
+    li.querySelector(".ans-q").textContent = q.prompt;
+    const unit = q.unit ? ` ${q.unit}` : "";
+    li.querySelector(".ans-real b").textContent = formatValue(q, q.answer) + unit;
+    li.querySelector(".ans-you b").textContent = formatValue(q, r.guess);
+    li.querySelector(".ans-pts").textContent = r.bullseye ? "🎯 100" : r.points;
     list.appendChild(li);
   });
+  showCrowd(state.day, total, !state.practice);
   // Practice replays an earlier day. The preview build (window.BULLSEYE_PREVIEW)
   // can also step forward into upcoming days for testing.
   const today = puzzleNumber(new Date());
@@ -541,6 +588,58 @@ function showSummary() {
       $("#share").textContent = "Copy the text below";
     }
   };
+}
+
+// "Better than X% of players" and today's score graph, from /api/scores.
+// Each device sends its score once per day. If the API isn't there (local
+// copies, or no database yet) the panel just stays hidden.
+async function showCrowd(day, total, submit) {
+  const box = $("#s-crowd");
+  box.hidden = false;
+  $("#c-loading").hidden = false;
+  $("#c-body").hidden = true;
+  const key = `bullseye-sent-${day}`;
+  let sent = false;
+  try { sent = localStorage.getItem(key) === "1"; } catch {}
+  let data;
+  try {
+    const res = submit && !sent
+      ? await fetch("api/scores", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ day, total }) })
+      : await fetch(`api/scores?day=${day}&total=${total}`);
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+    if (submit && !sent) try { localStorage.setItem(key, "1"); } catch {}
+  } catch { box.hidden = true; return; }
+  if (state.day !== day) return; // moved on to another set meanwhile
+  const s = crowdStanding(data, total);
+  $("#c-you").textContent = total;
+  $("#c-chart-wrap").hidden = !s;
+  if (!s) {
+    $("#c-avg").textContent = "–";
+    $("#c-line").textContent = "You're one of the first to finish. Check back later for the community average!";
+    $("#c-loading").hidden = true;
+    $("#c-body").hidden = false;
+    return;
+  }
+  $("#c-avg").textContent = s.average;
+  $("#c-line").textContent = s.diff > 0 ? `${s.diff} above average. Nice!`
+    : s.diff < 0 ? `${-s.diff} below average. Get 'em tomorrow!` : "Bang on average!";
+  // Graph: players per 50 points, with your bar lit up.
+  const chart = $("#c-chart");
+  chart.innerHTML = "";
+  const peak = Math.max(...s.bins, 1);
+  const mine = Math.min(s.bins.length - 1, Math.floor(total / 50));
+  s.bins.forEach((n, i) => {
+    const bar = document.createElement("span");
+    bar.className = i === mine ? "bar you" : "bar";
+    bar.style.setProperty("--h", `${Math.max(n ? 6 : 2, (n / peak) * 100)}%`);
+    bar.style.animationDelay = `${i * 25}ms`;
+    if (i === mine) bar.innerHTML = "<em>You</em>";
+    chart.appendChild(bar);
+  });
+  $("#c-chart-wrap").setAttribute("aria-label", `Graph of everyone's scores. You scored ${total}; the average is ${s.average}.`);
+  $("#c-loading").hidden = true;
+  $("#c-body").hidden = false;
 }
 
 setupSound();
