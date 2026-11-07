@@ -173,12 +173,10 @@ export function shareSquare(r) {
   return "🟥";
 }
 
-// Crowd stats from /api/scores: where a total sits among the day's players.
-// Under CROWD_MIN players the percentages mean little, so the page says so.
-export const CROWD_MIN = 10;
-export function crowdStanding({ players, below }) {
-  if (!players) return null;
-  const better = Math.floor((100 * below) / players);
-  const top = Math.max(1, Math.ceil((100 * (players - below)) / players));
-  return { players, better, top, early: players < CROWD_MIN };
+// Crowd stats from /api/scores: the community's average score for the day.
+// Your own score is already counted, so with nobody else yet there's no
+// average worth showing. Player counts are never shown.
+export function crowdStanding(data, total) {
+  if (!data || !(data.players > 1) || data.average == null) return null;
+  return { average: data.average, diff: total - data.average, bins: data.bins };
 }

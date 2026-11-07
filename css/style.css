@@ -227,9 +227,12 @@ main { padding-block: 0 40px; }
 /* Crowd: better than X% of players, and the day's score graph */
 .crowd { margin-top: 14px; background: var(--night); border-radius: 18px; padding: 16px; }
 .crowd-loading { margin: 0; text-align: center; color: var(--lilac); font-size: 15px; }
-.crowd-head { text-align: center; }
-.crowd-top { display: block; font: 400 34px/1.1 var(--display); color: var(--gold); text-transform: uppercase; }
-.crowd-line { display: block; margin-top: 4px; font-size: 16px; font-weight: 700; color: var(--white); text-wrap: balance; }
+.crowd-head { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; text-align: center; }
+.crowd-stat { background: var(--stage); border-radius: 14px; padding: 10px 6px; display: flex; flex-direction: column; justify-content: space-between; }
+.crowd-stat .label { color: var(--lilac); font-size: 11.5px; }
+.crowd-n { display: block; margin-top: 4px; font: 400 36px/1 var(--display); color: var(--white); font-variant-numeric: tabular-nums; }
+.crowd-n.you { color: var(--gold); }
+.crowd-line { margin: 12px 0 0; text-align: center; font-size: 16px; font-weight: 700; color: var(--white); text-wrap: balance; }
 .chart { margin-top: 16px; }
 .chart-bars { height: 110px; display: flex; align-items: flex-end; gap: 3px; border-bottom: 3px solid var(--stage-2); padding-top: 22px; }
 .bar {

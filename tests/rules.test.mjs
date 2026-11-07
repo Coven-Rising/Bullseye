@@ -114,10 +114,10 @@ test("big numbers shorten to 3 significant figures, the guess box keeps every di
   assert.equal(parseGuess(""), 0);
 });
 
-test("crowd standing: better than X%, top Y%", () => {
-  assert.deepEqual(crowdStanding({ players: 200, below: 146 }), { players: 200, better: 73, top: 27, early: false });
-  assert.equal(crowdStanding({ players: 200, below: 199 }).top, 1);
-  assert.equal(crowdStanding({ players: 200, below: 0 }).better, 0);
-  assert.equal(crowdStanding({ players: 3, below: 1 }).early, true);
-  assert.equal(crowdStanding({ players: 0, below: 0 }), null);
+test("crowd standing: your score against the community average", () => {
+  const bins = [1];
+  assert.deepEqual(crowdStanding({ players: 50, average: 620, bins }, 640), { average: 620, diff: 20, bins });
+  assert.equal(crowdStanding({ players: 50, average: 620, bins }, 580).diff, -40);
+  assert.equal(crowdStanding({ players: 1, average: 640, bins }, 640), null);
+  assert.equal(crowdStanding(null, 640), null);
 });

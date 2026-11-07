@@ -32,6 +32,13 @@ test("records scores and reports where a total sits", async () => {
   assert.equal(data.bins[14], 2); // 700-749
   assert.equal(data.bins[20], 1); // a perfect 1000
   assert.equal(data.bins.reduce((a, n) => a + n, 0), 8);
+  assert.equal(data.average, 644); // (120+480+510+690+700+700+950+1000) / 8 = 643.75
+  const d2 = await (await get(env, "day=2&total=500")).json();
+  assert.equal(d2.players, 1);
+  assert.equal(d2.average, 300);
+  const empty = await (await get({ DB: fakeD1() }, "day=1&total=500")).json();
+  assert.equal(empty.players, 0);
+  assert.equal(empty.average, null);
 });
 
 test("rejects bad scores and days, and 503s without a database", async () => {

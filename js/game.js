@@ -611,22 +611,25 @@ async function showCrowd(day, total, submit) {
     if (submit && !sent) try { localStorage.setItem(key, "1"); } catch {}
   } catch { box.hidden = true; return; }
   if (state.day !== day) return; // moved on to another set meanwhile
-  const s = crowdStanding(data);
-  if (!s) { box.hidden = true; return; }
-  const who = submit ? "today's" : `puzzle #${day}'s`;
-  if (s.early) {
-    $("#c-top").textContent = `Player #${s.players}`;
-    $("#c-line").textContent = `You're one of the first ${s.players} ${s.players === 1 ? "player" : "players"} on #${day}. Check back later to see where you rank!`;
-  } else {
-    $("#c-top").textContent = `Top ${s.top}%`;
-    $("#c-line").textContent = `${submit ? "You beat" : "You'd beat"} ${s.better}% of ${who} ${s.players.toLocaleString("en-US")} players`;
+  const s = crowdStanding(data, total);
+  $("#c-you").textContent = total;
+  $("#c-chart-wrap").hidden = !s;
+  if (!s) {
+    $("#c-avg").textContent = "–";
+    $("#c-line").textContent = "You're one of the first to finish. Check back later for the community average!";
+    $("#c-loading").hidden = true;
+    $("#c-body").hidden = false;
+    return;
   }
+  $("#c-avg").textContent = s.average;
+  $("#c-line").textContent = s.diff > 0 ? `${s.diff} above average. Nice!`
+    : s.diff < 0 ? `${-s.diff} below average. Get 'em tomorrow!` : "Bang on average!";
   // Graph: players per 50 points, with your bar lit up.
   const chart = $("#c-chart");
   chart.innerHTML = "";
-  const peak = Math.max(...data.bins, 1);
-  const mine = Math.min(data.bins.length - 1, Math.floor(total / 50));
-  data.bins.forEach((n, i) => {
+  const peak = Math.max(...s.bins, 1);
+  const mine = Math.min(s.bins.length - 1, Math.floor(total / 50));
+  s.bins.forEach((n, i) => {
     const bar = document.createElement("span");
     bar.className = i === mine ? "bar you" : "bar";
     bar.style.setProperty("--h", `${Math.max(n ? 6 : 2, (n / peak) * 100)}%`);
@@ -634,7 +637,7 @@ async function showCrowd(day, total, submit) {
     if (i === mine) bar.innerHTML = "<em>You</em>";
     chart.appendChild(bar);
   });
-  $("#c-chart-wrap").setAttribute("aria-label", `Score graph: ${s.players} players, you scored ${total}`);
+  $("#c-chart-wrap").setAttribute("aria-label", `Graph of everyone's scores. You scored ${total}; the average is ${s.average}.`);
   $("#c-loading").hidden = true;
   $("#c-body").hidden = false;
 }

@@ -6,9 +6,11 @@
 //   POST /api/scores {day, total}   records one finished game
 //   GET  /api/scores?day=N&total=T  returns the day's numbers
 //
-// Response: { day, players, below, same, bins }
+// Response: { day, players, average, below, same, bins }
+//   average: the day's mean score (what the page shows, next to yours)
 //   below / same: how many players scored under / exactly T
 //   bins: players per 50 points (0-49, 50-99, ... 950-999, 1000)
+// The page never shows player counts.
 
 const LAUNCH = Date.UTC(2026, 10, 7); // puzzle #1, matches js/rules.js
 const MAX_TOTAL = 1000;
@@ -32,25 +34,28 @@ async function ensureTable(db) {
   await db.prepare("CREATE INDEX IF NOT EXISTS scores_day ON scores (day, total)").run();
 }
 
-async function summary(db, day, total) {
+async function summary(db, from, to, total) {
   const bins = new Array(MAX_TOTAL / BIN + 1).fill(0);
   const { results } = await db
-    .prepare(`SELECT CAST(total / ${BIN} AS INTEGER) AS b, COUNT(*) AS n FROM scores WHERE day = ? GROUP BY b`)
-    .bind(day)
+    .prepare(`SELECT CAST(total / ${BIN} AS INTEGER) AS b, COUNT(*) AS n FROM scores WHERE day BETWEEN ? AND ? GROUP BY b`)
+    .bind(from, to)
     .all();
   for (const r of results) bins[Math.min(bins.length - 1, r.b)] = r.n;
   const players = bins.reduce((a, n) => a + n, 0);
   let below = 0, same = 0;
   if (validTotal(total)) {
     const row = await db
-      .prepare("SELECT SUM(total < ?1) AS below, SUM(total = ?1) AS same FROM scores WHERE day = ?2")
-      .bind(total, day)
+      .prepare("SELECT SUM(total < ?1) AS below, SUM(total = ?1) AS same FROM scores WHERE day BETWEEN ?2 AND ?3")
+      .bind(total, from, to)
       .first();
     below = row?.below ?? 0;
     same = row?.same ?? 0;
   }
-  return { day, players, below, same, bins };
+  const avg = await db.prepare("SELECT AVG(total) AS a FROM scores WHERE day BETWEEN ? AND ?").bind(from, to).first();
+  return { players, average: avg?.a == null ? null : Math.round(avg.a), below, same, bins };
 }
+
+const report = async (db, day, total) => ({ day, ...(await summary(db, day, day, total)) });
 
 export async function onRequestGet({ request, env }) {
   if (!env.DB) return json({ error: "no database" }, 503);
@@ -59,7 +64,7 @@ export async function onRequestGet({ request, env }) {
   const total = Number(url.searchParams.get("total"));
   if (!validDay(day)) return json({ error: "bad day" }, 400);
   await ensureTable(env.DB);
-  return json(await summary(env.DB, day, total));
+  return json(await report(env.DB, day, total));
 }
 
 export async function onRequestPost({ request, env }) {
@@ -70,5 +75,5 @@ export async function onRequestPost({ request, env }) {
   if (!validDay(day) || !validTotal(total)) return json({ error: "bad score" }, 400);
   await ensureTable(env.DB);
   await env.DB.prepare("INSERT INTO scores (day, total, at) VALUES (?, ?, ?)").bind(day, total, Date.now()).run();
-  return json(await summary(env.DB, day, total));
+  return json(await report(env.DB, day, total));
 }
