@@ -3,9 +3,12 @@
 export const LAUNCH_DATE = "2026-11-07"; // puzzle #1
 // Bullseye: within this share of the real answer (years: of the slider window).
 export const BULLSEYE_PCT = { fact: 0.02, fermi: 0.05, year: 0.005 };
-export const ZERO_AT = 0.5;      // 50% off the real answer scores 0
-export const YEAR_ZERO_AT = 0.3; // years: 30% of the window off scores 0
-export const CURVE = 1.4;        // >1 is kinder to near misses: 10% off scores ~81
+// Counts are scored by how many times off you are, so too high and too low are
+// treated alike: 2x and half score the same. 10% off ~83, 1.5x ~61, 2x ~40, 3x ~11.
+export const ZERO_RATIO = 3.5;   // 3.5x too high, or under a third of the answer, scores 0
+// Years are scored by distance as a share of the slider window, with a curve.
+export const YEAR_ZERO_AT = 0.45; // 45% of the window off scores 0 (45 yrs in a 100-yr window)
+export const YEAR_CURVE = 1.4;   // >1 is kinder to near misses: 10 yrs off in 100 scores ~79
 
 // Days since launch, by the player's local calendar date. #1 on launch day.
 export function puzzleNumber(date) {
@@ -140,9 +143,10 @@ export function bullseyeTolerance(q, range) {
 
 export function scoreGuess(q, range, guess) {
   if (Math.abs(guess - q.answer) <= bullseyeTolerance(q, range)) return { points: 100, bullseye: true };
-  const err = offBy(q, range, guess);
-  const t = q.type === "year" ? err / YEAR_ZERO_AT : err / ZERO_AT;
-  const left = q.type === "year" ? 1 - t : 1 - t ** CURVE;
+  let left;
+  if (q.type === "year") left = 1 - (offBy(q, range, guess) / YEAR_ZERO_AT) ** YEAR_CURVE;
+  else if (guess <= 0 || q.answer <= 0) left = 0;
+  else left = 1 - Math.abs(Math.log(guess / q.answer)) / Math.log(ZERO_RATIO);
   return { points: Math.max(0, Math.round(90 * left)), bullseye: false };
 }
 
