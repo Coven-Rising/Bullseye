@@ -549,7 +549,7 @@ function shareText() {
   const total = state.results.reduce((a, r) => a + r.points, 0);
   const bulls = state.results.filter((r) => r.bullseye).length;
   const squares = state.results.map(shareSquare).join("");
-  return `Bullseye #${state.day}  ${total}/${state.questions.length * 100}\n${squares}\n${bulls} bullseye${bulls === 1 ? "" : "s"}\n${location.origin}`;
+  return `Bullseye #${state.day}  ${total}/${state.questions.length * 100}\n${squares}\n${bulls} bullseye${bulls === 1 ? "" : "s"}\nplaybullseye.net`;
 }
 
 function showSummary() {
