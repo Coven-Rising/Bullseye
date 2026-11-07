@@ -541,11 +541,15 @@ function siteName(url) {
   } catch { return url; }
 }
 
+// Phones get the system share sheet (Messages, Discord, X...); desktops copy to the clipboard.
+const NATIVE_SHARE = !!navigator.share && matchMedia("(pointer: coarse)").matches;
+const SHARE_LABEL = NATIVE_SHARE ? "Share result" : "Copy result";
+
 function shareText() {
   const total = state.results.reduce((a, r) => a + r.points, 0);
   const bulls = state.results.filter((r) => r.bullseye).length;
   const squares = state.results.map(shareSquare).join("");
-  return `Bullseye #${state.day}  ${total}/${state.questions.length * 100}\n${squares}\n${bulls} bullseye${bulls === 1 ? "" : "s"}`;
+  return `Bullseye #${state.day}  ${total}/${state.questions.length * 100}\n${squares}\n${bulls} bullseye${bulls === 1 ? "" : "s"}\n${location.origin}`;
 }
 
 function showSummary() {
@@ -596,13 +600,18 @@ function showSummary() {
     state.results = [];
     state.index = 0;
     $("#puzzle-no").textContent = `#${state.day} (practice)`;
-    $("#share").textContent = "Copy result";
+    $("#share").textContent = SHARE_LABEL;
     $("#share-text").hidden = true;
     showQuestion();
     window.scrollTo(0, 0);
   };
+  $("#share").textContent = SHARE_LABEL;
   $("#share").onclick = async () => {
     const text = shareText();
+    if (NATIVE_SHARE) {
+      try { await navigator.share({ text }); return; }
+      catch (e) { if (e.name === "AbortError") return; } // closed the sheet; otherwise fall back to copying
+    }
     try { await navigator.clipboard.writeText(text); $("#share").textContent = "Copied!"; }
     catch {
       const box = $("#share-text");
