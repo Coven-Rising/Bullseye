@@ -176,14 +176,7 @@ main { padding-block: 0 40px; }
 
 /* Start screen */
 .start .bubble { margin-top: 4px; }
-.start .prompt { font: 400 24px/1.2 var(--display); text-align: center; }
-.how { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 12px; }
-.how li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; font-size: 16px; }
-.how-n {
-  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--gold); color: var(--night); font: 400 16px/1 var(--display); border: 3px solid var(--night);
-}
-.how b { color: var(--gold); }
+.start .prompt { font: 400 28px/1.2 var(--display); text-align: center; padding: 18px 4px; }
 .start-streak { margin: 18px 0 0; text-align: center; font-weight: 800; color: var(--gold); }
 
 /* Summary */
@@ -392,16 +385,58 @@ main { padding-block: 0 40px; }
 .sound-btn[aria-pressed="false"] .mute { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bull-fx { display: none !important; } }
 
-/* How-to-play popup */
+/* How-to-play popup: a marquee banner over numbered steps, with a live slider demo */
 .help-btn { padding: 0; font: 400 18px/1 var(--display); display: grid; place-items: center; }
 .rules {
-  width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
-  margin: auto; padding: 22px 20px 20px; border: 4px dotted var(--gold); border-radius: 26px;
-  background: var(--stage); color: var(--white);
+  width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+  margin: auto; padding: 0 16px 16px; border: 4px solid var(--night); border-radius: 26px;
+  background: var(--stage); color: var(--white); box-shadow: 0 8px 0 var(--night), 0 24px 60px rgb(0 0 0 / 0.5);
 }
-.rules::backdrop { background: rgb(26 8 56 / 0.82); }
-.rules-title { margin: 0 0 16px; text-align: center; font: 400 26px/1.1 var(--display); color: var(--gold); text-transform: uppercase; }
-.rules-list .how-n { font-size: 14px; }
-.rules-list i { font-style: normal; font-weight: 700; color: var(--white); text-decoration: underline; text-decoration-color: var(--gold); }
-.rules form { margin: 20px 0 0; display: flex; }
-.rules form .primary { flex: 1; }
+.rules[open] { animation: rules-in 380ms cubic-bezier(.3,1.5,.5,1); }
+@keyframes rules-in { from { transform: scale(0.85) translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.rules::backdrop { background: rgb(26 8 56 / 0.85); }
+.rules-banner {
+  margin: 14px 0 12px; padding: 8px; text-align: center;
+  background: var(--red); border: 4px dotted var(--gold); border-radius: 18px;
+  box-shadow: 0 5px 0 var(--night);
+}
+.rules-banner h2:focus { outline: none; }
+.rules-banner h2 { margin: 0; font: 400 24px/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.step {
+  display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start;
+  background: var(--night); border-radius: 16px; padding: 10px 12px;
+}
+.rules[open] .step { animation: step-in 360ms both cubic-bezier(.3,1.4,.5,1); }
+.rules[open] .step:nth-child(2) { animation-delay: 60ms; }
+.rules[open] .step:nth-child(3) { animation-delay: 120ms; }
+.rules[open] .step:nth-child(4) { animation-delay: 180ms; }
+.rules[open] .step:nth-child(5) { animation-delay: 240ms; }
+@keyframes step-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.step-n {
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--gold); color: var(--night); font: 400 18px/1 var(--display);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+}
+.step h3 { margin: 1px 0 2px; font: 400 17px/1.15 var(--display); color: var(--gold); text-transform: uppercase; letter-spacing: 0.01em; }
+.step p { margin: 0; font-size: 15px; line-height: 1.35; color: #e3d8ff; }
+.step .hl { color: var(--white); }
+.twists { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
+.twist { display: flex; align-items: center; gap: 8px; }
+.chip {
+  flex: none; min-width: 58px; text-align: center; padding: 4px 8px; border-radius: 999px;
+  background: var(--mint); color: var(--night); font: 400 12px/1 var(--display); text-transform: uppercase;
+}
+.chip-fermi { background: var(--gold); }
+/* Mini slider: the same gold fill and bullseye handle as the real one */
+.demo { margin-top: 8px; padding: 8px 12px 12px; background: var(--stage); border-radius: 14px; }
+.demo-num { display: block; text-align: center; font: 400 22px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.demo-track { position: relative; height: 10px; margin: 12px 14px 0; border-radius: 5px; background: var(--night); }
+.demo-fill { position: absolute; inset: 0 auto 0 0; width: var(--p, 47%); border-radius: 5px; background: var(--gold); }
+.demo-handle {
+  position: absolute; top: 50%; left: var(--p, 47%); width: 30px; height: 30px; transform: translate(-50%, -50%);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='17' fill='%23ff3d5a' stroke='%231a0838' stroke-width='1.5'/%3E%3Ccircle cx='18' cy='18' r='12' fill='%23fff'/%3E%3Ccircle cx='18' cy='18' r='7' fill='%23ff3d5a'/%3E%3Ccircle cx='18' cy='18' r='3' fill='%23fff'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 2px 0 var(--night));
+}
+.rules form { margin: 14px 0 0; display: flex; }
+.rules form .primary { flex: 1; margin-top: 0; padding: 14px; }
