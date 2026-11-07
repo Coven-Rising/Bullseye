@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, bullseyeTolerance, scoreGuess, pickDaily, puzzleNumber } from "../js/rules.js";
+import { sliderMax, bullseyeTolerance, scoreGuess, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
+const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
 
 test("slider top is a clean number at or above the answer", () => {
   for (const q of pool) {
@@ -32,12 +33,29 @@ test("scoring", () => {
   assert.equal(scoreGuess(q, 100, 90).points, 0);
 });
 
-test("daily pick has no repeats within a day and is stable", () => {
-  for (let d = 1; d < 20; d++) {
-    const ids = pickDaily(pool, d, 10).map((q) => q.id);
-    assert.equal(new Set(ids).size, 10);
-    assert.deepEqual(ids, pickDaily(pool, d, 10).map((q) => q.id));
+test("schedule: every day has 10 real questions and nothing is ever reused", () => {
+  const ids = new Set(pool.map((q) => q.id));
+  const seen = new Set();
+  for (const [i, day] of schedule.days.entries()) {
+    assert.equal(day.length, 10, `day ${i + 1}`);
+    for (const id of day) {
+      assert.ok(ids.has(id), `day ${i + 1}: unknown question ${id}`);
+      assert.ok(!seen.has(id), `day ${i + 1}: ${id} was already used`);
+      seen.add(id);
+    }
   }
+  assert.equal(dailyQuestions(pool, schedule, 1).length, 10);
+});
+
+test("planning new days never changes old ones or reuses questions", () => {
+  const fake = Array.from({ length: 35 }, (_, i) => ({ id: "q" + i, category: "c" + (i % 7), type: i % 5 ? "fact" : "fermi" }));
+  const s = { days: planDays(fake.slice(0, 20), { days: [] }, 10) };
+  const before = JSON.stringify(s.days);
+  const more = planDays(fake, s, 10);
+  assert.equal(JSON.stringify(s.days), before);
+  assert.equal(more.length, 1);
+  const all = [...s.days, ...more].flat();
+  assert.equal(new Set(all).size, all.length);
 });
 
 test("puzzle numbering", () => {

@@ -12,7 +12,7 @@ export function puzzleNumber(date) {
   return Math.max(1, Math.floor((today - launch) / 86400000) + 1);
 }
 
-// Small deterministic hash and RNG so every player gets the same puzzle.
+// Small deterministic hash and RNG.
 export function hash(str) {
   let h = 2166136261;
   for (const c of str) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); }
@@ -27,18 +27,48 @@ function rng(seed) {
   };
 }
 
-// Shuffle the pool once with a fixed seed, then walk through it 10 at a time.
-// No question repeats until the whole pool has been used.
-export function pickDaily(pool, day, count) {
-  const order = [...pool].sort((a, b) => a.id.localeCompare(b.id));
-  const rand = rng(hash("bullseye-pool"));
-  for (let i = order.length - 1; i > 0; i--) {
+// Each day's 10 questions are fixed in data/schedule.json (built by
+// scripts/schedule.mjs). Once a day is written it never changes and its
+// questions are never used again, so adding new questions is always safe.
+export function dailyQuestions(pool, schedule, day) {
+  const byId = new Map(pool.map((q) => [q.id, q]));
+  const days = schedule.days;
+  if (!days.length) return [];
+  const ids = days[Math.min(day, days.length) - 1];
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
+// Plan new days from questions that have never been scheduled. Existing days
+// are left exactly as they are. Each new day mixes categories and has at most
+// one Fermi estimate.
+export function planDays(pool, schedule, perDay, seed = "bullseye") {
+  const used = new Set(schedule.days.flat());
+  const fresh = pool.filter((q) => !used.has(q.id)).sort((a, b) => a.id.localeCompare(b.id));
+  const rand = rng(hash(seed + schedule.days.length));
+  for (let i = fresh.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
+    [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
   }
-  const n = Math.min(count, order.length);
-  const start = ((day - 1) * n) % order.length;
-  return Array.from({ length: n }, (_, i) => order[(start + i) % order.length]);
+  const added = [];
+  while (fresh.length >= perDay) {
+    const day = [];
+    const cats = new Map();
+    let fermi = 0;
+    for (let pass = 0; pass < 3 && day.length < perDay; pass++) {
+      for (let i = 0; i < fresh.length && day.length < perDay; i++) {
+        const q = fresh[i];
+        const c = cats.get(q.category) || 0;
+        const isFermi = q.type === "fermi";
+        // Pass 0: one per category, one Fermi. Pass 1: two per category. Pass 2: anything.
+        if (pass < 2 && c > pass) continue;
+        if (pass < 2 && isFermi && fermi >= 1) continue;
+        day.push(q); cats.set(q.category, c + 1); if (isFermi) fermi++;
+        fresh.splice(i--, 1);
+      }
+    }
+    added.push(day.map((q) => q.id));
+  }
+  return added;
 }
 
 // The slider always starts at 0. Its top is a clean number (10, 25, 50, 100,

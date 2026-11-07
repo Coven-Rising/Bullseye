@@ -1,7 +1,6 @@
 // Bullseye: a daily estimation game. Prototype, no build step.
-import { pickDaily, puzzleNumber, sliderMax, bullseyeTolerance, scoreGuess, shareSquare } from "./rules.js";
+import { dailyQuestions, puzzleNumber, sliderMax, bullseyeTolerance, scoreGuess, shareSquare } from "./rules.js";
 
-const QUESTIONS_PER_DAY = 10;
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
@@ -16,11 +15,15 @@ function load() {
 }
 
 async function start() {
-  const pool = await (await fetch("data/questions.json")).json();
+  const [pool, schedule] = await Promise.all([
+    fetch("data/questions.json").then((r) => r.json()),
+    fetch("data/schedule.json").then((r) => r.json()),
+  ]);
+  state.schedule = schedule;
   const params = new URLSearchParams(location.search);
   state.day = params.has("day") ? Number(params.get("day")) : puzzleNumber(new Date());
   state.pool = pool;
-  state.questions = pickDaily(pool, state.day, QUESTIONS_PER_DAY);
+  state.questions = dailyQuestions(pool, schedule, state.day);
   state.results = params.has("fresh") ? [] : load();
   state.index = state.results.length;
   $("#puzzle-no").textContent = `#${state.day}`;
@@ -500,11 +503,17 @@ function showSummary() {
     li.querySelector(".s-pts").textContent = r.points;
     list.appendChild(li);
   });
-  // Prototype only: jump to the next set of questions to keep playing.
+  // Practice replays an earlier day. The preview build (window.BULLSEYE_PREVIEW)
+  // can also step forward into upcoming days for testing.
+  const today = puzzleNumber(new Date());
+  const next = window.BULLSEYE_PREVIEW ? state.day + 1 : (state.practice ? state.day - 1 : today - 1);
+  const canPractice = next >= 1 && next <= state.schedule.days.length;
+  $("#practice").hidden = !canPractice;
+  $("#practice").textContent = window.BULLSEYE_PREVIEW ? `Play #${next} (preview)` : `Play #${next} (practice)`;
   $("#practice").onclick = () => {
-    state.day++;
+    state.day = next;
     state.practice = true;
-    state.questions = pickDaily(state.pool, state.day, QUESTIONS_PER_DAY);
+    state.questions = dailyQuestions(state.pool, state.schedule, state.day);
     state.results = [];
     state.index = 0;
     $("#puzzle-no").textContent = `#${state.day} (practice)`;
