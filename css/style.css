@@ -176,14 +176,7 @@ main { padding-block: 0 40px; }
 
 /* Start screen */
 .start .bubble { margin-top: 4px; }
-.start .prompt { font: 400 24px/1.2 var(--display); text-align: center; }
-.how { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 12px; }
-.how li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; font-size: 16px; }
-.how-n {
-  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--gold); color: var(--night); font: 400 16px/1 var(--display); border: 3px solid var(--night);
-}
-.how b { color: var(--gold); }
+.start .prompt { font: 400 28px/1.2 var(--display); text-align: center; padding: 18px 4px; }
 .start-streak { margin: 18px 0 0; text-align: center; font-weight: 800; color: var(--gold); }
 
 /* Summary */
