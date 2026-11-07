@@ -94,17 +94,49 @@ export function sliderMax(q) {
   return ladder[i];
 }
 
-// Bullseye window: 0.5% of the scale (2% for Fermi estimates), rounded down.
-// On small scales that rounds to 0, so the answer must be exact.
-export function bullseyeTolerance(q, max) {
-  return Math.floor(max * (BULLSEYE_PCT[q.type] ?? BULLSEYE_PCT.fact));
+// Year questions ("What year was Van Gogh born?") use a window of years
+// instead of starting at 0. The window is a clean width (100 years for
+// modern dates, wider for older ones) that starts on a round number, with
+// the answer at least 10% in from either end. Where the answer sits inside
+// the window varies by question, so the middle of the bar gives nothing away.
+export const LATEST_YEAR = 2025;
+export function yearWidth(answer) {
+  if (answer >= 1800) return 100;
+  if (answer >= 1500) return 200;
+  if (answer >= 1000) return 500;
+  return 1000;
+}
+export function sliderRange(q) {
+  if (q.type !== "year") return { min: 0, max: sliderMax(q) };
+  if (q.min != null && q.max != null) return { min: q.min, max: q.max };
+  const w = yearWidth(q.answer);
+  const step = w / 4;
+  const starts = [];
+  for (let s = Math.ceil((q.answer - w * MAX_POSITION) / step) * step; s <= q.answer - w * (1 - MAX_POSITION); s += step) starts.push(s);
+  const capped = starts.filter((s) => s + w <= LATEST_YEAR);
+  const pool = capped.length ? capped : starts;
+  const min = pool[hash(q.id) % pool.length];
+  return { min, max: min + w };
 }
 
-export function scoreGuess(q, max, guess) {
+// Bullseye window: 0.5% of the scale (2% for Fermi estimates), rounded down.
+// On small scales that rounds to 0, so the answer must be exact. A 100-year
+// window needs the exact year.
+export function bullseyeTolerance(q, width) {
+  return Math.floor(width * (BULLSEYE_PCT[q.type] ?? BULLSEYE_PCT.fact));
+}
+
+export function scoreGuess(q, range, guess) {
+  const width = range.max - range.min;
   const diff = Math.abs(guess - q.answer);
-  if (diff <= bullseyeTolerance(q, max)) return { points: 100, bullseye: true };
-  const err = diff / max;
+  if (diff <= bullseyeTolerance(q, width)) return { points: 100, bullseye: true };
+  const err = diff / width;
   return { points: Math.max(0, Math.round(90 * (1 - err / PARTIAL_CUTOFF))), bullseye: false };
+}
+
+// Years print without a thousands separator (1853, not 1,853).
+export function formatValue(q, n) {
+  return q.type === "year" ? String(Math.round(n)) : Math.round(n).toLocaleString("en-US");
 }
 
 export function shareSquare(r) {

@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import { sliderMax, bullseyeTolerance, scoreGuess, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
+import { sliderMax, sliderRange, bullseyeTolerance, scoreGuess, formatValue, dailyQuestions, planDays, puzzleNumber } from "../js/rules.js";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../data/questions.json", import.meta.url)));
 const schedule = JSON.parse(fs.readFileSync(new URL("../data/schedule.json", import.meta.url)));
 
 test("slider top is a clean number at or above the answer", () => {
-  for (const q of pool) {
+  for (const q of pool.filter((q) => q.type !== "year")) {
     const max = sliderMax(q);
     assert.ok(max >= q.answer, q.id);
     assert.ok(max <= q.answer * 10 + 10, q.id);
@@ -16,7 +16,11 @@ test("slider top is a clean number at or above the answer", () => {
 });
 
 test("the answer never sits at the very end of the bar", () => {
-  for (const q of pool) assert.ok(q.answer <= sliderMax(q) * 0.9, q.id);
+  for (const q of pool) {
+    const { min, max } = sliderRange(q);
+    const at = (q.answer - min) / (max - min);
+    assert.ok(at <= 0.9 && (q.type !== "year" || at >= 0.1), q.id);
+  }
   assert.ok(sliderMax({ id: "y", answer: 100 }) > 100);
 });
 
@@ -28,9 +32,9 @@ test("small scales need an exact answer", () => {
 
 test("scoring", () => {
   const q = { type: "fact", answer: 26 };
-  assert.deepEqual(scoreGuess(q, 100, 26), { points: 100, bullseye: true });
-  assert.equal(scoreGuess(q, 100, 31).points, 75);
-  assert.equal(scoreGuess(q, 100, 90).points, 0);
+  assert.deepEqual(scoreGuess(q, { min: 0, max: 100 }, 26), { points: 100, bullseye: true });
+  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 31).points, 75);
+  assert.equal(scoreGuess(q, { min: 0, max: 100 }, 90).points, 0);
 });
 
 test("schedule: every day has 10 real questions and nothing is ever reused", () => {
@@ -56,6 +60,23 @@ test("planning new days never changes old ones or reuses questions", () => {
   assert.equal(more.length, 1);
   const all = [...s.days, ...more].flat();
   assert.equal(new Set(all).size, all.length);
+});
+
+test("year questions use a window of years", () => {
+  const vg = { id: "van-gogh-born", type: "year", answer: 1853 };
+  const r = sliderRange(vg);
+  assert.equal(r.max - r.min, 100);
+  assert.equal(r.min % 25, 0);
+  assert.ok(vg.answer - r.min >= 10 && r.max - vg.answer >= 10);
+  assert.ok(sliderRange({ id: "moon", type: "year", answer: 2010 }).max <= 2025);
+  assert.equal(sliderRange({ id: "rome", type: "year", answer: 1453 }).max - sliderRange({ id: "rome", type: "year", answer: 1453 }).min, 500);
+  assert.deepEqual(scoreGuess(vg, r, 1853), { points: 100, bullseye: true });
+  assert.equal(scoreGuess(vg, r, 1863).points, 60);
+  assert.equal(formatValue(vg, 1853), "1853");
+  assert.equal(formatValue({ type: "fact" }, 1853), "1,853");
+  // Different questions land at different spots in their window.
+  const spots = new Set(["a", "b", "c", "d", "e", "f"].map((id) => sliderRange({ id, type: "year", answer: 1853 }).min));
+  assert.ok(spots.size > 1);
 });
 
 test("puzzle numbering", () => {
